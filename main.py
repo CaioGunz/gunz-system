@@ -6,7 +6,7 @@ from tkinter import messagebox
 
 # Pergunta para o usuario se ele deseja fechar o sistema, se sim encera por completo
 def fechajanelasSecundarias(janela, parent=None):
-    if messagebox.askokcancel('Encerrar','Realmente Deseja Encerrar o Sistema ? ;('):
+    if messagebox.askokcancel('Encerrar','Realmente deseja encerrar o sistema ? ;('):
         if parent:
             parent.destroy()
         else:
