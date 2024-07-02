@@ -1,8 +1,9 @@
-from typing import Tuple
 import pandas as pd
 import customtkinter
 import requests
+from typing import Tuple
 from tkinter import messagebox
+from datetime import datetime
 
 # Pergunta para o usuario se ele deseja fechar o sistema, se sim encera por completo
 def fechajanelasSecundarias(janela, parent=None):
@@ -78,16 +79,28 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         self.entryAtividade4.grid(column=1, row=6, pady=5)
 
         # Label e Entry para coleta da Nota MAPA
-        self.labelAtividade4 = customtkinter.CTkLabel(self, text='Entre com a Nota MAPA', font=('Montserrar', 14))
-        self.labelAtividade4.grid(column=2, row=2, padx=10, pady=5)
-        self.entryAtividade4 = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
-        self.entryAtividade4.grid(column=3, row=2, pady=5)
+        self.labelMapa = customtkinter.CTkLabel(self, text='Entre com a Nota MAPA', font=('Montserrar', 14))
+        self.labelMapa.grid(column=2, row=2, padx=10, pady=5)
+        self.entryMapa = customtkinter.CTkEntry(self, placeholder_text='Ex: 3,5', width=200, border_color='#008485')
+        self.entryMapa.grid(column=3, row=2, pady=5)
 
-        # Label e Entry para coleta da Nota Atividade 4
-        self.labelAtividade4 = customtkinter.CTkLabel(self, text='Entre com a Nota SGC:', font=('Montserrar', 14))
-        self.labelAtividade4.grid(column=2, row=3, padx=10, pady=5)
-        self.entryAtividade4 = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
-        self.entryAtividade4.grid(column=3, row=3, pady=5)
+        # Label e Entry para coleta da Nota SGC
+        self.labelSGC = customtkinter.CTkLabel(self, text='Entre com a Nota SGC:', font=('Montserrar', 14))
+        self.labelSGC.grid(column=2, row=3, padx=10, pady=5)
+        self.entrySGC = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
+        self.entrySGC.grid(column=3, row=3, pady=5)
+
+        # Label e Entry para coleta da Data da mensalidade
+        self.labelDataMensalidade = customtkinter.CTkLabel(self, text='Entre com a Data da Mensalidade:', font=('Montserrar', 14))
+        self.labelDataMensalidade.grid(column=2, row=4, padx=10, pady=5)
+        self.entryDataMensalidade = customtkinter.CTkEntry(self, placeholder_text='Ex: jan/2024', width=200, border_color='#008485')
+        self.entryDataMensalidade.grid(column=3, row=4, pady=5)
+
+        # Label e Entry para coleta do Valor da Mensalidade
+        self.labelValorMensalidade = customtkinter.CTkLabel(self, text='Entre com o Valor da Mensalidade:', font=('Montserrar', 14))
+        self.labelValorMensalidade.grid(column=2, row=5, padx=10, pady=5)
+        self.entryValorMensalidade = customtkinter.CTkEntry(self, placeholder_text='Ex: R$ 350', width=200, border_color='#008485')
+        self.entryValorMensalidade.grid(column=3, row=5, pady=5)
         
         # Botão para voltar à janela inicial
         self.botaoVoltarInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
@@ -96,7 +109,22 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         # Chama a função universal para perguntar se o usuario realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
-
+        
+    def salvarDados(self):
+        # Coletando os dados
+        nomeMateria = self.entryNomeMateria.get()
+        notaAtividade1 = float(self.entryAtividade1.get())
+        notaAtividade2 = float(self.entryAtividade2.get())
+        notaAtividade3 = float(self.entryAtividade3.get())
+        notaAtividade4 = float(self.entryAtividade4.get())
+        notaMapa = float(self.entryMapa.get())
+        notaSGC = float(self.entrySGC.get())
+        valorMensalidade = float(self.entryValorMensalidade)
+        # Formatação da data
+        dataEmString = self.entryDataMensalidade.get()
+        dataObjeto = datetime.strftime(dataEmString, '%d%m%Y')
+        dataMensalidade = dataObjeto.strftime('%b/%y')
+        
 # Classe onde estão os botoes para todos os modulos
 class Janelas(customtkinter.CTk):
     def __init__(self):
