@@ -4,6 +4,9 @@ import requests
 from typing import Tuple
 from tkinter import messagebox
 from datetime import datetime
+from classes.faculdade import Faculdade
+
+faculdades = []
 
 # Pergunta para o usuario se ele deseja fechar o sistema, se sim encera por completo
 def fechajanelasSecundarias(janela, parent=None):
@@ -26,6 +29,29 @@ class BotaoVoltarInicial(customtkinter.CTkButton):
         janelaInicial.restauraJanela()
         self.master.destroy()
 
+# Componente Botão "Salvar Dados" com função embutida
+class botaoSalvaDados(customtkinter.CTkButton):
+    # Definicao de alguns padroes no botao
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, text='Salvar Dados', command=lambda: self.salvarDados, **kwargs)
+    
+    def salvarDados(self):
+        self.master.salvarDados()
+        messagebox.showinfo('Sucesso', 'Dados salvos com sucesso!!')
+
+# Componente Botão "Limpar Campos" com função embutida
+class botaoLimparCampos(customtkinter.CTkButton):
+    def __init__(self, parent, **kwargs):
+        # Seta parametros basicos do botão
+        super().__init__(parent, text='Limpar Campos', command= lambda:self.limparCampos, **kwargs)
+    
+    # Função para limpar os dados dos campos
+    def limparCampos(self):
+        for widget in self.master.winfo_children():
+            if isinstance(widget, customtkinter.CTkEntry):
+                widget.delete(0, customtkinter.END)
+        messagebox.showinfo("Sucesso", "Campos limpos com sucesso!")
+
 # Classe da janela do modulo Faculdade
 class JanelaFaculdade(customtkinter.CTkToplevel):
     
@@ -35,7 +61,7 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         self.parent = parent
         self.janelaIncial = janelaInicial
         self.resizable(width=None, height=None)
-        self.geometry('900x300')
+        self.geometry('900x400')
         # Configuracao Icone
         self.after(200, lambda: self.iconbitmap('assets/logoGrande-40x40.ico'))
         self.title('Gunz System - Faculdade')
@@ -49,66 +75,85 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         self.vazio.grid(column=0, row=1, pady=10)
         
         # Label e Entry para coleta do nome da materia
-        self.labelNomeMateria = customtkinter.CTkLabel(self, text='Entre com o nome da matéria:', font=('Montserrar', 14))
+        self.labelNomeMateria = customtkinter.CTkLabel(self, text='Entre com o nome da matéria:', font=('Montserrat', 14))
         self.labelNomeMateria.grid(column=0, row=2, padx=10, pady=5)
         self.entryNomeMateria = customtkinter.CTkEntry(self, placeholder_text='Nome Matéria', width=200, border_color='#008485')
         self.entryNomeMateria.grid(column=1, row=2, pady=5)
 
         # Label e Entry para coleta da Nota Atividade 1
-        self.labelAtividade1 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 1:', font=('Montserrar', 14))
+        self.labelAtividade1 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 1:', font=('Montserrat', 14))
         self.labelAtividade1.grid(column=0, row=3, padx=10, pady=5)
         self.entryAtividade1 = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
         self.entryAtividade1.grid(column=1, row=3, pady=5)
 
         # Label e Entry para coleta da Nota Atividade 2
-        self.labelAtividade2 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 2:', font=('Montserrar', 14))
+        self.labelAtividade2 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 2:', font=('Montserrat', 14))
         self.labelAtividade2.grid(column=0, row=4, padx=10, pady=5)
         self.entryAtividade2 = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
         self.entryAtividade2.grid(column=1, row=4, pady=5)
 
         # Label e Entry para coleta da Nota Atividade 3
-        self.labelAtividade3 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 3:', font=('Montserrar', 14))
+        self.labelAtividade3 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 3:', font=('Montserrat', 14))
         self.labelAtividade3.grid(column=0, row=5, padx=10, pady=5)
         self.entryAtividade3 = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
         self.entryAtividade3.grid(column=1, row=5, pady=5)
 
         # Label e Entry para coleta da Nota Atividade 4
-        self.labelAtividade4 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 4:', font=('Montserrar', 14))
+        self.labelAtividade4 = customtkinter.CTkLabel(self, text='Entre com a Nota Atividade 4:', font=('Montserrat', 14))
         self.labelAtividade4.grid(column=0, row=6, padx=10, pady=5)
         self.entryAtividade4 = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
         self.entryAtividade4.grid(column=1, row=6, pady=5)
 
         # Label e Entry para coleta da Nota MAPA
-        self.labelMapa = customtkinter.CTkLabel(self, text='Entre com a Nota MAPA', font=('Montserrar', 14))
+        self.labelMapa = customtkinter.CTkLabel(self, text='Entre com a Nota MAPA', font=('Montserrat', 14))
         self.labelMapa.grid(column=2, row=2, padx=10, pady=5)
         self.entryMapa = customtkinter.CTkEntry(self, placeholder_text='Ex: 3,5', width=200, border_color='#008485')
         self.entryMapa.grid(column=3, row=2, pady=5)
 
         # Label e Entry para coleta da Nota SGC
-        self.labelSGC = customtkinter.CTkLabel(self, text='Entre com a Nota SGC:', font=('Montserrar', 14))
+        self.labelSGC = customtkinter.CTkLabel(self, text='Entre com a Nota SGC:', font=('Montserrat', 14))
         self.labelSGC.grid(column=2, row=3, padx=10, pady=5)
         self.entrySGC = customtkinter.CTkEntry(self, placeholder_text='Ex: 0,5', width=200, border_color='#008485')
         self.entrySGC.grid(column=3, row=3, pady=5)
 
         # Label e Entry para coleta da Data da mensalidade
-        self.labelDataMensalidade = customtkinter.CTkLabel(self, text='Entre com a Data da Mensalidade:', font=('Montserrar', 14))
+        self.labelDataMensalidade = customtkinter.CTkLabel(self, text='Entre com a Data da Mensalidade:', font=('Montserrat', 14))
         self.labelDataMensalidade.grid(column=2, row=4, padx=10, pady=5)
         self.entryDataMensalidade = customtkinter.CTkEntry(self, placeholder_text='Ex: jan/2024', width=200, border_color='#008485')
         self.entryDataMensalidade.grid(column=3, row=4, pady=5)
 
         # Label e Entry para coleta do Valor da Mensalidade
-        self.labelValorMensalidade = customtkinter.CTkLabel(self, text='Entre com o Valor da Mensalidade:', font=('Montserrar', 14))
+        self.labelValorMensalidade = customtkinter.CTkLabel(self, text='Entre com o Valor da Mensalidade:', font=('Montserrat', 14))
         self.labelValorMensalidade.grid(column=2, row=5, padx=10, pady=5)
         self.entryValorMensalidade = customtkinter.CTkEntry(self, placeholder_text='Ex: R$ 350', width=200, border_color='#008485')
         self.entryValorMensalidade.grid(column=3, row=5, pady=5)
+
+        # Checkbox para caso marcado seja positivo e nao marcado negativo
+        self.checkBoxPAgoFaculdade = customtkinter.CTkCheckBox(self, text='Pago', font=('Montserrat', 14), command=self.atualizaCheckBox)
+        self.checkBoxPAgoFaculdade.grid(column=2, row=6, padx=10, pady=5)
+        # Variavel parav armazenar o estado do checkbox
+        self.varPago = customtkinter.StringVar(value='Não')
         
         # Botão para voltar à janela inicial
         self.botaoVoltarInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
         self.botaoVoltarInicial.grid(column=1, row=7, pady=10)
         
+        # Botao para salvar os dados
+        self.botaoSalvarDados = botaoSalvaDados(self, janelaInicial, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoSalvarDados.grid(column=2, row=6)
+        
+        # Botao para Limpar dados
+        self.botaoLimpaDados = botaoLimparCampos(self, janelaInicial, font=('Montserrat', 14), fg_color="#054648", hover_color='#003638')
+        self.botaoLimpaDados.grid(column=3, row=6)
+        
+        
         # Chama a função universal para perguntar se o usuario realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
+    
+    # Atualiza o check box para nao bugar o codigo
+    def atualizaCheckBox(self):
+        self.varPago.set('Sim' if self.checkBoxPAgoFaculdade.get() else 'Não')
         
     def salvarDados(self):
         # Coletando os dados
@@ -124,6 +169,11 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         dataEmString = self.entryDataMensalidade.get()
         dataObjeto = datetime.strftime(dataEmString, '%d%m%Y')
         dataMensalidade = dataObjeto.strftime('%b/%y')
+        pagoFaculdade = self.varPago.get()
+        
+        faculdade = Faculdade(nomeMateria, notaAtividade1, notaAtividade2, notaAtividade3, notaAtividade4, notaMapa, notaSGC, valorMensalidade, dataMensalidade, pagoFaculdade)
+        faculdades.append(faculdade)
+        Faculdade.atualizaCSV(faculdades, 'controleFinanceiro.csv')
         
 # Classe onde estão os botoes para todos os modulos
 class Janelas(customtkinter.CTk):

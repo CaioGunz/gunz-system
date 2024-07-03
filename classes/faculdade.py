@@ -3,7 +3,7 @@ import pandas as pd
 nomeArquivo = 'controleFinanceiro.csv'
 
 class Faculdade:
-    def __init__(self, nomeMateria, notaAtvd1, notaAtvd2, notaAtvd3, notaAtvd4, notaMapa, notaSGC, valorMensalidade, dataMensalidade):
+    def __init__(self, nomeMateria, notaAtvd1, notaAtvd2, notaAtvd3, notaAtvd4, notaMapa, notaSGC, valorMensalidade, dataMensalidade, pago):
         self.nomeMateria = nomeMateria
         self.notaAtvd1 = notaAtvd1
         self.notaAtvd2 = notaAtvd2
@@ -13,6 +13,7 @@ class Faculdade:
         self.notaSGC = notaSGC
         self.valorMensalidade =valorMensalidade
         self.dataMensalidade = dataMensalidade
+        self.pago = pago
     
     def dicionarioDados(self):
         return {
@@ -24,14 +25,15 @@ class Faculdade:
             'Nota Mapa': self.notaMapa,
             'Nota SGC': self.notaSGC,
             'Valor Mensalidade': self.valorMensalidade,
-            'Data Mensalidade': self.dataMensalidade
+            'Data Mensalidade': self.dataMensalidade,
+            'Pago': self.pago
         }
     
     def atualizaCSV(faculdades, nomeArquivo):
         try:
             dfExistente = pd.read_csv(nomeArquivo)
         except FileNotFoundError:
-            dfExistente = pd.DataFrame(columns=['Nome da Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota Mapa', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade'])
+            dfExistente = pd.DataFrame(columns=['Nome da Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota Mapa', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago'])
         
         # Converte novos dados para o DataFrame
         dfNovo = pd.DataFrame([faculdade.dicionarioDados() for faculdade in faculdades])
