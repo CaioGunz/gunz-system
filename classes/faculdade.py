@@ -1,6 +1,5 @@
 import pandas as pd
-
-nomeArquivo = 'controleFinanceiro.csv'
+import xlsxwriter
 
 class Faculdade:
     def __init__(self, nomeMateria, notaAtvd1, notaAtvd2, notaAtvd3, notaAtvd4, notaMapa, notaSGC, valorMensalidade, dataMensalidade, pago):
@@ -11,7 +10,7 @@ class Faculdade:
         self.notaAtvd4 = notaAtvd4
         self.notaMapa = notaMapa
         self.notaSGC = notaSGC
-        self.valorMensalidade =valorMensalidade
+        self.valorMensalidade = valorMensalidade
         self.dataMensalidade = dataMensalidade
         self.pago = pago
     
@@ -29,17 +28,35 @@ class Faculdade:
             'Pago': self.pago
         }
     
-    def atualizaCSV(faculdades, nomeArquivo):
+    @staticmethod
+    def atualizaExcel(faculdades, nomeArquivo):
         try:
-            dfExistente = pd.read_csv(nomeArquivo)
-        except FileNotFoundError:
-            dfExistente = pd.DataFrame(columns=['Nome da Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota Mapa', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago'])
+            # Cria um novo arquivo Excel
+            workbook = xlsxwriter.Workbook(nomeArquivo)
+            worksheet = workbook.add_worksheet('Faculdade')
+            
+            # Formato para data
+            date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
+            
+            # Escreve os cabeçalhos
+            headers = ['Nome da Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota Mapa', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']
+            for col, header in enumerate(headers):
+                worksheet.write(0, col, header)
+            
+            # Escreve os dados das faculdades
+            row = 1
+            for faculdade in faculdades:
+                data = faculdade.dicionarioDados()
+                for col, value in enumerate(data.values()):
+                    if isinstance(value, pd.Timestamp):
+                        worksheet.write_datetime(row, col, value.to_pydatetime(), date_format)
+                    else:
+                        worksheet.write(row, col, value)
+                row += 1
+            
+            # Fecha o arquivo Excel
+            workbook.close()
         
-        # Converte novos dados para o DataFrame
-        dfNovo = pd.DataFrame([faculdade.dicionarioDados() for faculdade in faculdades])
-        
-        # Concatenar os dados antigos com os novos
-        dfAtualizado = pd.concat([dfExistente, dfNovo], ignore_index=True)
-        
-        # Salvar no CSV
-        dfAtualizado.to_csv(nomeArquivo, index=False)
+        except Exception as e:
+            print(f"Erro ao atualizar o arquivo Excel: {e}")
+

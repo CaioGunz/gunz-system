@@ -33,11 +33,16 @@ class BotaoVoltarInicial(customtkinter.CTkButton):
 class botaoSalvaDados(customtkinter.CTkButton):
     # Definicao de alguns padroes no botao
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, text='Salvar Dados', command=lambda: self.salvarDados, **kwargs)
+        # Chama o __init__ da classe base CTkButton com os argumentos
+        super().__init__(parent, text='Salvar Dados', command=self.salvarDados, **kwargs)
     
     def salvarDados(self):
-        self.master.salvarDados()
-        messagebox.showinfo('Sucesso', 'Dados salvos com sucesso!!')
+        # Verifica se o parent tem o método salvarDados
+        if hasattr(self.master, 'salvarDados'):
+            self.master.salvarDados()
+            messagebox.showinfo('Sucesso', 'Dados salvos com sucesso!!')
+        else:
+            messagebox.showerror('Erro', 'O método salvarDados não foi encontrado!')
 
 # Componente Botão "Limpar Campos" com função embutida
 class botaoLimparCampos(customtkinter.CTkButton):
@@ -134,22 +139,22 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         # Variavel parav armazenar o estado do checkbox
         self.varPago = customtkinter.StringVar(value='Não')
         
-        # Botão para voltar à janela inicial
-        self.botaoVoltarInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
-        self.botaoVoltarInicial.grid(column=1, row=7, pady=10)
-        
         # Botao para salvar os dados
-        self.botaoSalvarDados = botaoSalvaDados(self, janelaInicial, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
-        self.botaoSalvarDados.grid(column=2, row=6)
+        self.botaoSalvarDados = botaoSalvaDados(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoSalvarDados.grid(column=2, row=7, pady=10)
         
         # Botao para Limpar dados
-        self.botaoLimpaDados = botaoLimparCampos(self, janelaInicial, font=('Montserrat', 14), fg_color="#054648", hover_color='#003638')
-        self.botaoLimpaDados.grid(column=3, row=6)
+        self.botaoLimpaDados = botaoLimparCampos(self, font=('Montserrat', 14), fg_color="#054648", hover_color='#003638')
+        self.botaoLimpaDados.grid(column=3, row=7, pady=10)
         
+        # Botão para voltar à janela inicial
+        self.botaoVoltarInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
+        self.botaoVoltarInicial.place(relx=0.5, rely=0.85, anchor='center')
         
         # Chama a função universal para perguntar se o usuario realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
+        
     
     # Atualiza o check box para nao bugar o codigo
     def atualizaCheckBox(self):
@@ -164,16 +169,15 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         notaAtividade4 = float(self.entryAtividade4.get())
         notaMapa = float(self.entryMapa.get())
         notaSGC = float(self.entrySGC.get())
-        valorMensalidade = float(self.entryValorMensalidade)
+        valorMensalidade = float(self.entryValorMensalidade.get())
         # Formatação da data
         dataEmString = self.entryDataMensalidade.get()
-        dataObjeto = datetime.strftime(dataEmString, '%d%m%Y')
-        dataMensalidade = dataObjeto.strftime('%b/%y')
+        dataMensalidade = datetime.strptime(dataEmString, '%d/%m/%Y')
         pagoFaculdade = self.varPago.get()
         
         faculdade = Faculdade(nomeMateria, notaAtividade1, notaAtividade2, notaAtividade3, notaAtividade4, notaMapa, notaSGC, valorMensalidade, dataMensalidade, pagoFaculdade)
         faculdades.append(faculdade)
-        Faculdade.atualizaCSV(faculdades, 'controleFinanceiro.csv')
+        Faculdade.atualizaExcel(faculdades, 'controleFinanceiro.xlsx')
         
 # Classe onde estão os botoes para todos os modulos
 class Janelas(customtkinter.CTk):
