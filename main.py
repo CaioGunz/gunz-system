@@ -48,7 +48,7 @@ class botaoSalvaDados(customtkinter.CTkButton):
 class botaoLimparCampos(customtkinter.CTkButton):
     def __init__(self, parent, **kwargs):
         # Seta parametros basicos do botão
-        super().__init__(parent, text='Limpar Campos', command= lambda:self.limparCampos, **kwargs)
+        super().__init__(parent, text='Limpar Campos', command= self.limparCampos, **kwargs)
     
     # Função para limpar os dados dos campos
     def limparCampos(self):
@@ -56,6 +56,21 @@ class botaoLimparCampos(customtkinter.CTkButton):
             if isinstance(widget, customtkinter.CTkEntry):
                 widget.delete(0, customtkinter.END)
         messagebox.showinfo("Sucesso", "Campos limpos com sucesso!")
+
+class JanelaContasDeCasa(customtkinter.CTkToplevel):
+    
+    def __init__(self, parent, janelaInicial):
+        super().__init__()
+        
+        self.parent = parent
+        self.janelaInicial = janelaInicial
+        self.resizable(width=None, height=None)
+        self.geometry('500x300')
+        # Configuracao do icone da pagina
+        self.after(200, lambda: self.iconbitmap('assets/logoGrande-40x40.ico'))
+        self.title('Gunz System - Contas de Casa')
+
+
 
 # Classe da janela do modulo Faculdade
 class JanelaFaculdade(customtkinter.CTkToplevel):
@@ -203,6 +218,10 @@ class Janelas(customtkinter.CTk):
         # Botao Para acesso a janela do modulo Faculdade
         self.botaoFaculdade = customtkinter.CTkButton(self, text="Faculdade", command=lambda: JanelaFaculdade(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
         self.botaoFaculdade.grid(column=1, row=2, columnspan=1, pady=10)
+
+        # Botao Para acesso a janela do modulo Contas de Casa
+        self.botaoContasDeCasa = customtkinter.CTkButton(self, text="Contas de Casa", command=lambda: JanelaContasDeCasa(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
+        self.botaoContasDeCasa.grid(column=1, row=3, columnspan=1, pady=10)
         
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self))
     
