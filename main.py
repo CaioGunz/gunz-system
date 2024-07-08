@@ -5,8 +5,10 @@ from typing import Tuple
 from tkinter import messagebox
 from datetime import datetime
 from classes.faculdade import Faculdade
+from classes.contasCasa import contasDeCasa
 
 faculdades = []
+contaCasa = []
 
 # Pergunta para o usuario se ele deseja fechar o sistema, se sim encera por completo
 def fechajanelasSecundarias(janela, parent=None):
@@ -57,6 +59,7 @@ class botaoLimparCampos(customtkinter.CTkButton):
                 widget.delete(0, customtkinter.END)
         messagebox.showinfo("Sucesso", "Campos limpos com sucesso!")
 
+# Classe da janela do modulo ContasCasa
 class JanelaContasDeCasa(customtkinter.CTkToplevel):
     
     def __init__(self, parent, janelaInicial):
@@ -65,7 +68,7 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.parent = parent
         self.janelaInicial = janelaInicial
         self.resizable(width=False, height=False)
-        self.geometry('500x300')
+        self.geometry('500x400')
         # Configuracao do icone da pagina
         self.after(200, lambda: self.iconbitmap('assets/logoGrande-40x40.ico'))
         self.title('Gunz System - Contas de Casa')
@@ -74,6 +77,53 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.tituloPrincipalContasDeCasa = customtkinter.CTkLabel(self, text='Contas de Casa Mês a Mês', font=('Montserrat', 20))
         self.tituloPrincipalContasDeCasa.place(relx=0.5, rely=0.05, anchor='center')
         
+        # Abre espaco vazio para organizar 
+        self.vazio = customtkinter.CTkLabel(self, text='')
+        self.vazio.grid(column=0, row=1, pady=10)
+        
+        # Label e Entry para coleta do nome da materia
+        self.labelNomeContaCasa = customtkinter.CTkLabel(self, text='Entre com o nome da conta:', font=('Montserrat', 14))
+        self.labelNomeContaCasa.grid(column=0, row=2, padx=10, pady=5)
+        self.entryNomeContaCasa = customtkinter.CTkEntry(self, placeholder_text='Ex: Luz', width=200, border_color='#008485')
+        self.entryNomeContaCasa.grid(column=1, row=2, pady=5)
+
+        # Label e Entry para coleta do nome da materia
+        self.labelPagoContaCasa = customtkinter.CTkLabel(self, text='Entre com o Valor Pago:', font=('Montserrat', 14))
+        self.labelPagoContaCasa.grid(column=0, row=3, padx=10, pady=5)
+        self.entryPagoContaCasa = customtkinter.CTkEntry(self, placeholder_text='Ex: 150', width=200, border_color='#008485')
+        self.entryPagoContaCasa.grid(column=1, row=3, pady=5)
+
+        # Label e Entry para coleta do nome da materia
+        self.labelDataVencimentoCasa = customtkinter.CTkLabel(self, text='Entre com o a Data de Vencimento:', font=('Montserrat', 14))
+        self.labelDataVencimentoCasa.grid(column=0, row=4, padx=10, pady=5)
+        self.entryDataVencimentoCasa = customtkinter.CTkEntry(self, placeholder_text='Ex: 10/01/2024', width=200, border_color='#008485')
+        self.entryDataVencimentoCasa.grid(column=1, row=4, pady=5)
+
+        # Label e Entry para coleta do nome da materia
+        self.labelDataPagamentoCasa = customtkinter.CTkLabel(self, text='Entre com o a Data de Pagamento:', font=('Montserrat', 14))
+        self.labelDataPagamentoCasa.grid(column=0, row=5, padx=10, pady=5)
+        self.entryDataPagamentoCasa = customtkinter.CTkEntry(self, placeholder_text='Ex: 05/01/2024', width=200, border_color='#008485')
+        self.entryDataPagamentoCasa.grid(column=1, row=5, pady=5)
+
+        # Label e Entry para coleta do nome da materia
+        self.labelObservacao = customtkinter.CTkLabel(self, text='Entre com o a Observação (se tiver):', font=('Montserrat', 14))
+        self.labelObservacao.grid(column=0, row=6, padx=10, pady=5)
+        self.entryObservacao = customtkinter.CTkEntry(self, width=200, border_color='#008485')
+        self.entryObservacao.grid(column=1, row=6, pady=5)
+        
+        # Checkbox para caso marcado seja positivo e nao marcado negativo
+        self.checkBoxPAgoContasCasa = customtkinter.CTkCheckBox(self, text='Pago', font=('Montserrat', 14), command=self.atualizaCheckBoxCasa)
+        self.checkBoxPAgoContasCasa.grid(column=0, row=7, padx=10, pady=5)
+        # Variavel parav armazenar o estado do checkbox
+        self.varPagoCasa = customtkinter.StringVar(value='Não')
+        
+        # Instancia do  botao de salar dados
+        self.botaoSalvarDados = botaoSalvaDados(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoSalvarDados.grid(column=0, row=8)
+        
+        # Instancia do botao limpar dados
+        self.botaoLimpaDados = botaoLimparCampos(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoLimpaDados.grid(column=1, row=8)
         
         # Chama a classe que gera o botao para voltar a pagina inicial
         self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
@@ -83,7 +133,25 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
 
-
+    def atualizaCheckBoxCasa(self):
+        self.varPagoCasa.set('Sim' if self.checkBoxPAgoContasCasa.get() else 'Não')
+        
+    def salvarDados(self):
+        #Coletando os dados
+        nomeContaDeCasa = self.entryNomeContaCasa.get()
+        valorPago = self.entryPagoContaCasa.get()
+        pago = self.varPagoCasa.get()
+        observacoes = self.entryObservacao.get()
+        dataEmString = self.entryDataVencimentoCasa.get()
+        dataVencimento = datetime.strptime(dataEmString, '%d/%m/%Y')
+        dataEmString2 = self.entryDataPagamentoCasa.get()
+        dataPagamento = datetime.strptime(dataEmString2, '%d/%m/%Y')
+        
+        conta = contasDeCasa(nomeContaDeCasa, valorPago, dataVencimento, dataPagamento, pago, observacoes)
+        contaCasa.append(conta)
+        contasDeCasa.atualizaExcel(contaCasa, 'controleFinanceiro.xlsx')
+        contaCasa.clear()
+               
 # Classe da janela do modulo Faculdade
 class JanelaFaculdade(customtkinter.CTkToplevel):
     
@@ -181,8 +249,7 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         # Chama a função universal para perguntar se o usuario realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
-        
-    
+          
     # Atualiza o check box para nao bugar o codigo
     def atualizaCheckBox(self):
         self.varPago.set('Sim' if self.checkBoxPAgoFaculdade.get() else 'Não')
@@ -205,6 +272,7 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         faculdade = Faculdade(nomeMateria, notaAtividade1, notaAtividade2, notaAtividade3, notaAtividade4, notaMapa, notaSGC, valorMensalidade, dataMensalidade, pagoFaculdade)
         faculdades.append(faculdade)
         Faculdade.atualizaExcel(faculdades, 'controleFinanceiro.xlsx')
+        faculdades.clear()
         
 # Classe onde estão os botoes para todos os modulos
 class Janelas(customtkinter.CTk):

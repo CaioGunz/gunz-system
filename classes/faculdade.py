@@ -1,5 +1,7 @@
 import pandas as pd
-import xlsxwriter
+from openpyxl import load_workbook, Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+from datetime import datetime
 
 class Faculdade:
     def __init__(self, nomeMateria, notaAtvd1, notaAtvd2, notaAtvd3, notaAtvd4, notaMapa, notaSGC, valorMensalidade, dataMensalidade, pago):
@@ -29,34 +31,45 @@ class Faculdade:
         }
     
     @staticmethod
-    def atualizaExcel(faculdades, nomeArquivo):
+    def atualizaExcel(listaFaculdades, nomeArquivo):
         try:
-            # Cria um novo arquivo Excel
-            workbook = xlsxwriter.Workbook(nomeArquivo)
-            worksheet = workbook.add_worksheet('Faculdade')
+            # Verifica se o arquivo existe
+            try:
+                workbook = load_workbook(nomeArquivo)
+            except FileNotFoundError:
+                workbook = Workbook()
+                workbook.remove(workbook.active)
+                
+            sheet_name = 'Faculdade'
+            if sheet_name not in workbook.sheetnames:
+                worksheet = workbook.create_sheet(sheet_name)
+                # Escreve os cabeçalhos
+                headers = ['Nome Matéria', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota MAPA', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']
+                worksheet.append(headers)
+            else:
+                worksheet = workbook[sheet_name]
+
+            # Verifica se os dados já existem
+            existing_entries = set()
+            for row in worksheet.iter_rows(min_row=2, values_only=True):
+                existing_entries.add(tuple(row))
+
+            # Converte os dados das faculdades em um DataFrame
+            df = pd.DataFrame([faculdade.dicionarioDados() for faculdade in listaFaculdades])
+
+            # Adiciona as novas linhas ao worksheet
+            for row in dataframe_to_rows(df, index=False, header=False):
+                if tuple(row) not in existing_entries:
+                    worksheet.append(row)
             
             # Formato para data
-            date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
+            for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, min_col=9, max_col=9):
+                for cell in row:
+                    cell.number_format = 'DD/MM/YYYY'
             
-            # Escreve os cabeçalhos
-            headers = ['Nome da Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota Mapa', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']
-            for col, header in enumerate(headers):
-                worksheet.write(0, col, header)
-            
-            # Escreve os dados das faculdades
-            row = 1
-            for faculdade in faculdades:
-                data = faculdade.dicionarioDados()
-                for col, value in enumerate(data.values()):
-                    if isinstance(value, pd.Timestamp):
-                        worksheet.write_datetime(row, col, value.to_pydatetime(), date_format)
-                    else:
-                        worksheet.write(row, col, value)
-                row += 1
-            
-            # Fecha o arquivo Excel
-            workbook.close()
-        
+            # Salva o arquivo
+            workbook.save(nomeArquivo)
+
         except Exception as e:
             print(f"Erro ao atualizar o arquivo Excel: {e}")
 
