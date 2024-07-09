@@ -65,7 +65,7 @@ class Faculdade:
             # Formato para data
             for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, min_col=9, max_col=9):
                 for cell in row:
-                    cell.number_format = 'DD/MM/YYYY'
+                    cell.number_format = 'dd/mm/yyyy'
             
             # Salva o arquivo
             workbook.save(nomeArquivo)

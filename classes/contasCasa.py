@@ -57,7 +57,7 @@ class contasDeCasa:
             # Formato para data
             for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, min_col=3, max_col=4):
                 for cell in row:
-                    cell.number_format = 'DD/MM/YYYY'
+                    cell.number_format = 'dd/mm/yyyy'
             
             # Salva o arquivo
             workbook.save(nomeArquivo)

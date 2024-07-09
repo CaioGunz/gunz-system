@@ -6,9 +6,12 @@ from tkinter import messagebox
 from datetime import datetime
 from classes.faculdade import Faculdade
 from classes.contasCasa import contasDeCasa
+from classes.investimentosSalario import InvestimentosSalario
 
 faculdades = []
 contaCasa = []
+investimentos = []
+
 
 # Pergunta para o usuario se ele deseja fechar o sistema, se sim encera por completo
 def fechajanelasSecundarias(janela, parent=None):
@@ -59,6 +62,83 @@ class botaoLimparCampos(customtkinter.CTkButton):
                 widget.delete(0, customtkinter.END)
         messagebox.showinfo("Sucesso", "Campos limpos com sucesso!")
 
+# Classe da janela do modulo InvestimentoSalario
+class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
+    
+    def __init__(self, parent, janelaInicial):
+        super().__init__()
+        
+        self.parent = parent
+        self.janelaInicial = janelaInicial
+        self.resizable(width=False, height=False)
+        self.geometry('500x300')
+        # Configuracao do icone da pagina
+        self.after(200, lambda: self.iconbitmap('assets/logoGrande-40x40.ico'))
+        self.title('Gunz System - Investimentos e Salario')
+        
+        # Titulo para pagina de Investimentos
+        self.tituloPrincipalInvestimentos = customtkinter.CTkLabel(self, text='Investimentos e Salário', font=('Montserrat', 20))
+        self.tituloPrincipalInvestimentos.place(relx=0.5, rely=0.05, anchor='center')
+        
+        # Abre espaco vazio para organizar 
+        self.vazio = customtkinter.CTkLabel(self, text='')
+        self.vazio.grid(column=0, row=1, pady=10)        
+        
+        # Lista com os meses usados na pagina de investimento
+        mes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+        # Lista com o ano Usado na pagina de investimento
+        anoAtual = datetime.now().year
+        anos = [str(anoAtual - 2), str(anoAtual -1), str(anoAtual)]
+        # Lista com o tipo de investimento e se é salario ou não
+        tipoInvestimento = ['Investimento', 'Reserva de Emergência', 'Salário']
+        
+        # Combo box com os valores do ano do investimento
+        self.comboBoxAnoInvestimento = customtkinter.CTkComboBox(self, values=["Selecione o ano"] + anos, width=150, border_color='#008485')
+        self.comboBoxAnoInvestimento.grid(column=0, row=2, padx=60)
+
+        # Combo box com os valores do mes do investimento
+        self.comboBoxMesInvestimento = customtkinter.CTkComboBox(self, values=["Selecione o mês"] + mes, width=150, border_color='#008485')
+        self.comboBoxMesInvestimento.grid(column=1, row=2, padx=10)
+
+        # Combo box com os valores do tipo de investimento
+        self.comboBoxTipoInvestimento = customtkinter.CTkComboBox(self, values=["Selecione o tipo de investimento"] + tipoInvestimento, width=300, border_color='#008485')
+        self.comboBoxTipoInvestimento.place(relx= 0.5, rely=0.35, anchor='center')
+        
+        # Entry e Label para o valor investido
+        self.labelValorInvestido = customtkinter.CTkLabel(self, text='Entre com o valor investido:', font=('Montserrat', 14))
+        self.labelValorInvestido.place(relx=0.05, rely=0.45)
+        self.entryValorInvestido = customtkinter.CTkEntry(self, placeholder_text='Ex: 1500', border_color='#008485', width=200)
+        self.entryValorInvestido.place(relx=0.50, rely=0.45)
+        
+        # Instancia do  botao de salar dados
+        self.botaoSalvarDados = botaoSalvaDados(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoSalvarDados.place(relx=0.10, rely=0.65)
+        
+        # Instancia do botao limpar dados
+        self.botaoLimpaDados = botaoLimparCampos(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoLimpaDados.place(relx=0.60, rely=0.65)        
+        
+        # Chama a classe que gera o botao para voltar a pagina inicial
+        self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
+        self.botaoPaginaInicial.place(relx=0.5, rely=0.85, anchor='center')
+        
+        # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
+        self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
+        self.parent.iconify()
+
+    # Função para chamar a classe onde os dados vão ser salvos
+    def salvarDados(self):
+        # Coletando os dados
+        mes = self.comboBoxMesInvestimento.get()
+        ano = self.comboBoxMesInvestimento.get()
+        tipoInvestimento = self.comboBoxTipoInvestimento.get()
+        valor = self.entryValorInvestido.get()
+
+        investimento = InvestimentosSalario(mes, ano, tipoInvestimento, valor)
+        investimentos.append(investimento)
+        InvestimentosSalario.atualizaExcel(investimentos, 'controleFinanceiro.xlsx')
+        investimentos.clear()
+    
 # Classe da janela do modulo ContasCasa
 class JanelaContasDeCasa(customtkinter.CTkToplevel):
     
@@ -302,6 +382,10 @@ class Janelas(customtkinter.CTk):
         # Botao Para acesso a janela do modulo Contas de Casa
         self.botaoContasDeCasa = customtkinter.CTkButton(self, text="Contas de Casa", command=lambda: JanelaContasDeCasa(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
         self.botaoContasDeCasa.grid(column=1, row=3, columnspan=1, pady=10)
+
+        # Botao Para acesso a janela do modulo Contas de Casa
+        self.botaoInvestimentoSalario = customtkinter.CTkButton(self, text="Investimento e Salario", command=lambda: JanelaInvestimentoSalario(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
+        self.botaoInvestimentoSalario.grid(column=1, row=4, columnspan=1, pady=10)
         
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self))
     
