@@ -213,9 +213,11 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
 
+    # Atualiza o check box para nao bugar o codigo
     def atualizaCheckBoxCasa(self):
         self.varPagoCasa.set('Sim' if self.checkBoxPAgoContasCasa.get() else 'Não')
-        
+    
+    # Função para chamar a classe onde os dados vão ser salvos    
     def salvarDados(self):
         #Coletando os dados
         nomeContaDeCasa = self.entryNomeContaCasa.get()
@@ -333,7 +335,8 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
     # Atualiza o check box para nao bugar o codigo
     def atualizaCheckBox(self):
         self.varPago.set('Sim' if self.checkBoxPAgoFaculdade.get() else 'Não')
-        
+    
+    # Função para chamar a classe onde os dados vão ser salvos    
     def salvarDados(self):
         # Coletando os dados
         nomeMateria = self.entryNomeMateria.get()
@@ -356,6 +359,7 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         
 # Classe onde estão os botoes para todos os modulos
 class Janelas(customtkinter.CTk):
+    
     def __init__(self):
         super().__init__()
         
