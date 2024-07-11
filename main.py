@@ -1,5 +1,6 @@
 import pandas as pd
 import customtkinter
+import tkinter as tk
 import requests
 from typing import Tuple
 from tkinter import messagebox
@@ -12,6 +13,11 @@ faculdades = []
 contaCasa = []
 investimentos = []
 
+# Lista com os meses usados na pagina de investimento
+mes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+# Lista com o ano Usado na pagina de investimento
+anoAtual = datetime.now().year
+anos = [str(anoAtual - 2), str(anoAtual -1), str(anoAtual)]
 
 # Pergunta para o usuario se ele deseja fechar o sistema, se sim encera por completo
 def fechajanelasSecundarias(janela, parent=None):
@@ -62,6 +68,149 @@ class botaoLimparCampos(customtkinter.CTkButton):
                 widget.delete(0, customtkinter.END)
         messagebox.showinfo("Sucesso", "Campos limpos com sucesso!")
 
+# Compronente Entry com formatacao automatica da data quando preenchido pela usuario
+class FormattedEntry(customtkinter.CTkEntry):
+    def __init__(self, parent, placeholder_text='', border_color='#008485', width=200, format_type='date', **kwargs):
+        super().__init__(parent, placeholder_text=placeholder_text, border_color=border_color, width=width, **kwargs)
+        self.format_type = format_type # Define o tipo de formatacao (data ou hora)
+        self.bind("<KeyRelease>", self.on_key_release) # Vincula o evento de liberacao de tecla
+        self.bind("<KeyPress>", self.on_key_press) # Vincula o evento de pressao de tecla
+    
+    # Metodo e chamado quando uma tecla e liberada
+    def on_key_release(self, event):
+        content = self.get() # obtem o conteudo atual do campo de entrada
+        cursor_position = self.index(tk.INSERT) # obtem a posicao atual do cursor
+        
+        if self.format_type == 'date':
+            formatted_content = self.format_date(content) # Formata o conteudo como data
+        elif self.format_type == 'time':
+            formatted_content = self.format_time(content) # Formata o conteudo como hora
+        else:
+            formatted_content = content # Mantem sem formatacao 
+        
+        self.delete(0, customtkinter.END) # apaga o conteudo formatado
+        self.insert(0, formatted_content) # Insere o conteudo formatado
+        
+        new_cursor_position = cursor_position # Define uma nova posicao para o cursor
+        if self.format_type == 'date':
+            if cursor_position > 2 and len(formatted_content) > 2:
+                new_cursor_position += 1 # Ajusta o cursor apos o dia
+            if cursor_position > 5 and len(formatted_content) > 5:
+                new_cursor_position += 1 # Ajusta o cursor apos o mes
+        elif self.format_type == 'time':
+            if cursor_position > 2 and len(formatted_content) > 2:
+                new_cursor_position += 1 # Ajusta o cursor apos a hora
+        
+        self.icursor(new_cursor_position)
+
+    # Metodo chamado quando uma tecla e pressionada
+    def on_key_press(self, event):
+        if self.format_type == 'date':
+            if not event.char.isdigit() and event.char != "/" and event.keysym != "BackSpace":
+                return "break" # Bloqueia a entrada de caracteres nao permitidos para datas
+        elif self.format_type == 'time':
+            if not event.char.isdigit() and event.char != ":" and event.keysym != "BackSpace":
+                return "break" # Bloqueia a entrada de caracteres nao permitidos para horas
+
+    # Metodo para formatar o conteudo de data
+    def format_date(self, content):
+        numbers = ''.join(filter(str.isdigit, content)) # Filtra apenas os digitos do conteudo
+        formatted_date = ""
+        
+        if len(numbers) > 0:
+            formatted_date += numbers[:2] # Adiciona os primeiros dois digitos como dia
+        if len(numbers) > 2:
+            month = numbers[2:4] # Adiciona o mes
+            if int(month) > 12:
+                month = '12'
+            formatted_date += '/' + month
+        if len(numbers) > 4:
+            formatted_date += '/' + numbers[4:8] # Adiciona o ano
+        
+        return formatted_date
+
+    # Metodo para formatar o conteudo como hora
+    def format_time(self, content):
+        numbers = ''.join(filter(str.isdigit, content))
+        formatted_time = ""
+        
+        if len(numbers) > 0:
+            formatted_time += numbers[:2] # Adiciona os primeiros dois digitos como hora
+        if len(numbers) > 2:
+            formatted_time += ':' + numbers[2:4] # Adiciona os minutos
+        
+        return formatted_time
+
+# Classe da janela do modulo HorasTrabalho
+class JanelaHorasTrabalhada(customtkinter.CTkToplevel):
+    
+    def __init__(self, parent, janelaInicial):
+        super().__init__()
+        
+        self.parent = parent
+        self.janelaInicial = janelaInicial
+        self.resizable(width=False, height=False)
+        self.geometry('500x300')
+        # COnfiguracao do icone da pagina
+        self.after(200, lambda: self.iconbitmap('assets/logoGrande-40x40.ico'))
+        self.title('Gunz System - Horas Trabalhadas')
+        
+        self.tituloPrincipalHorasTrabalhadas = customtkinter.CTkLabel(self, text='Horas Trabalhadas e Extras', font=('Monstserrat', 20))
+        self.tituloPrincipalHorasTrabalhadas.place(relx=0.5, rely=0.05, anchor='center')
+        
+        # Abre espaco vazio para organizar 
+        self.vazio = customtkinter.CTkLabel(self, text='')
+        self.vazio.grid(column=0, row=1, pady=10) 
+
+        # Combo box com os valores do ano do trabalho
+        self.comboBoxAnoTrabalho = customtkinter.CTkComboBox(self, values=["Selecione o ano"] + anos, width=150, border_color='#008485')
+        self.comboBoxAnoTrabalho.grid(column=0, row=2, padx=60)
+
+        # Combo box com os valores do mes do trabalho
+        self.comboBoxMesTrabalho = customtkinter.CTkComboBox(self, values=["Selecione o mês"] + mes, width=150, border_color='#008485')
+        self.comboBoxMesTrabalho.grid(column=1, row=2, padx=10)        
+        
+        # Entry e Label com a data de trabalho
+        self.labelDataTrabalho = customtkinter.CTkLabel(self, text='Entre com o dia trabalhado:', font=('Montserrat', 14))
+        self.labelDataTrabalho.grid(column=0, row=3, pady=5)
+        self.entryDataTRabalho = FormattedEntry(self, placeholder_text='Ex: 01/01/2024', border_color='#008485', width=200, format_type='date')
+        self.entryDataTRabalho.grid(column=1, row=3, pady=10)
+
+        # Entry e Label com a Carga Horaria de trabalho
+        self.labelCargaHoraria = customtkinter.CTkLabel(self, text='Entre com a carga horária:', font=('Montserrat', 14))
+        self.labelCargaHoraria.grid(column=0, row=4, pady=5)
+        self.entryCargaHoraria = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
+        self.entryCargaHoraria.grid(column=1, row=4, pady=10)
+
+        # Entry e Label com a Hora Entrada
+        self.labelHoraEntrada = customtkinter.CTkLabel(self, text='Entre com a hora de entrada:', font=('Montserrat', 14))
+        self.labelHoraEntrada.grid(column=0, row=5, pady=5)
+        self.entryHoraEntrada = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
+        self.entryHoraEntrada.grid(column=1, row=5, pady=10)
+
+        # Entry e Label com a Hora Saida Almmoco
+        self.labelHoraSaidaAlmoco = customtkinter.CTkLabel(self, text='Entre com a hora de saída para almoço:', font=('Montserrat', 14))
+        self.labelHoraSaidaAlmoco.grid(column=0, row=5, pady=5)
+        self.entryHoraSaidaAlmoco = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
+        self.entryHoraSaidaAlmoco.grid(column=1, row=5, pady=10)
+        
+        # Chama a classe que gera o botao para voltar a pagina inicial
+        self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
+        self.botaoPaginaInicial.place(relx=0.5, rely=0.85, anchor='center')
+        
+        # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
+        self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
+        self.parent.iconify()
+    
+    def salvaDados(self):
+        ano = self.comboBoxAnoTrabalho.get()
+        mes = self.comboBoxMesTrabalho.get()
+        dataTrabalho = self.entryDataTRabalho.get()
+        cargaHoraria = self.entryCargaHoraria.get()
+        horaEntrada = self.entryHoraEntrada.get()
+        horaSaidaAlmoco = self.entryHoraSaidaAlmoco.get()
+        
+
 # Classe da janela do modulo InvestimentoSalario
 class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
     
@@ -84,11 +233,6 @@ class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
         self.vazio = customtkinter.CTkLabel(self, text='')
         self.vazio.grid(column=0, row=1, pady=10)        
         
-        # Lista com os meses usados na pagina de investimento
-        mes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-        # Lista com o ano Usado na pagina de investimento
-        anoAtual = datetime.now().year
-        anos = [str(anoAtual - 2), str(anoAtual -1), str(anoAtual)]
         # Lista com o tipo de investimento e se é salario ou não
         tipoInvestimento = ['Investimento', 'Reserva de Emergência', 'Salário']
         
@@ -176,13 +320,13 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         # Label e Entry para coleta do nome da materia
         self.labelDataVencimentoCasa = customtkinter.CTkLabel(self, text='Entre com o a Data de Vencimento:', font=('Montserrat', 14))
         self.labelDataVencimentoCasa.grid(column=0, row=4, padx=10, pady=5)
-        self.entryDataVencimentoCasa = customtkinter.CTkEntry(self, placeholder_text='Ex: 10/01/2024', width=200, border_color='#008485')
+        self.entryDataVencimentoCasa = FormattedEntry(self, placeholder_text='Ex: 10/01/2024', width=200, border_color='#008485', format_type='date')
         self.entryDataVencimentoCasa.grid(column=1, row=4, pady=5)
 
         # Label e Entry para coleta do nome da materia
         self.labelDataPagamentoCasa = customtkinter.CTkLabel(self, text='Entre com o a Data de Pagamento:', font=('Montserrat', 14))
         self.labelDataPagamentoCasa.grid(column=0, row=5, padx=10, pady=5)
-        self.entryDataPagamentoCasa = customtkinter.CTkEntry(self, placeholder_text='Ex: 05/01/2024', width=200, border_color='#008485')
+        self.entryDataPagamentoCasa = FormattedEntry(self, placeholder_text='Ex: 05/01/2024', width=200, border_color='#008485', format_type='date')
         self.entryDataPagamentoCasa.grid(column=1, row=5, pady=5)
 
         # Label e Entry para coleta do nome da materia
@@ -301,7 +445,7 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         # Label e Entry para coleta da Data da mensalidade
         self.labelDataMensalidade = customtkinter.CTkLabel(self, text='Entre com a Data da Mensalidade:', font=('Montserrat', 14))
         self.labelDataMensalidade.grid(column=2, row=4, padx=10, pady=5)
-        self.entryDataMensalidade = customtkinter.CTkEntry(self, placeholder_text='Ex: 01/01/2024', width=200, border_color='#008485')
+        self.entryDataMensalidade = FormattedEntry(self, placeholder_text='Ex: 01/01/2024', width=200, border_color='#008485', format_type='date')
         self.entryDataMensalidade.grid(column=3, row=4, pady=5)
 
         # Label e Entry para coleta do Valor da Mensalidade
@@ -390,6 +534,10 @@ class Janelas(customtkinter.CTk):
         # Botao Para acesso a janela do modulo Contas de Casa
         self.botaoInvestimentoSalario = customtkinter.CTkButton(self, text="Investimento e Salario", command=lambda: JanelaInvestimentoSalario(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
         self.botaoInvestimentoSalario.grid(column=1, row=4, columnspan=1, pady=10)
+
+        # Botao Para acesso a janela do modulo Contas de Casa
+        self.botaoHorasTRabalhadas = customtkinter.CTkButton(self, text="Horas Trabalhadas", command=lambda: JanelaHorasTrabalhada(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
+        self.botaoHorasTRabalhadas.grid(column=1, row=5, columnspan=1, pady=10)
         
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self))
     

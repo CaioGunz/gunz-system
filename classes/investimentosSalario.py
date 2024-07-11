@@ -61,6 +61,3 @@ class InvestimentosSalario:
 
         except Exception as e:
             print(f"Erro ao atualizar o arquivo Excel: {e}")
-
-        except Exception as e:
-            print(f"Erro ao atualizar o arquivo Excel: {e}")
