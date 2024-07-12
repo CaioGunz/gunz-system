@@ -8,10 +8,12 @@ from datetime import datetime
 from classes.faculdade import Faculdade
 from classes.contasCasa import contasDeCasa
 from classes.investimentosSalario import InvestimentosSalario
+from classes.horasTrabalho import horasTrabalhadas
 
 faculdades = []
 contaCasa = []
 investimentos = []
+horaTrabalho = []
 
 # Lista com os meses usados na pagina de investimento
 mes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -150,7 +152,7 @@ class JanelaHorasTrabalhada(customtkinter.CTkToplevel):
         self.parent = parent
         self.janelaInicial = janelaInicial
         self.resizable(width=False, height=False)
-        self.geometry('500x300')
+        self.geometry('500x500')
         # COnfiguracao do icone da pagina
         self.after(200, lambda: self.iconbitmap('assets/logoGrande-40x40.ico'))
         self.title('Gunz System - Horas Trabalhadas')
@@ -174,42 +176,85 @@ class JanelaHorasTrabalhada(customtkinter.CTkToplevel):
         self.labelDataTrabalho = customtkinter.CTkLabel(self, text='Entre com o dia trabalhado:', font=('Montserrat', 14))
         self.labelDataTrabalho.grid(column=0, row=3, pady=5)
         self.entryDataTRabalho = FormattedEntry(self, placeholder_text='Ex: 01/01/2024', border_color='#008485', width=200, format_type='date')
-        self.entryDataTRabalho.grid(column=1, row=3, pady=10)
+        self.entryDataTRabalho.grid(column=1, row=3, pady=5, padx=10)
 
         # Entry e Label com a Carga Horaria de trabalho
         self.labelCargaHoraria = customtkinter.CTkLabel(self, text='Entre com a carga horária:', font=('Montserrat', 14))
         self.labelCargaHoraria.grid(column=0, row=4, pady=5)
         self.entryCargaHoraria = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
-        self.entryCargaHoraria.grid(column=1, row=4, pady=10)
+        self.entryCargaHoraria.grid(column=1, row=4, pady=5, padx=10)
 
         # Entry e Label com a Hora Entrada
         self.labelHoraEntrada = customtkinter.CTkLabel(self, text='Entre com a hora de entrada:', font=('Montserrat', 14))
         self.labelHoraEntrada.grid(column=0, row=5, pady=5)
         self.entryHoraEntrada = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
-        self.entryHoraEntrada.grid(column=1, row=5, pady=10)
+        self.entryHoraEntrada.grid(column=1, row=5, pady=5, padx=10)
 
         # Entry e Label com a Hora Saida Almmoco
         self.labelHoraSaidaAlmoco = customtkinter.CTkLabel(self, text='Entre com a hora de saída para almoço:', font=('Montserrat', 14))
-        self.labelHoraSaidaAlmoco.grid(column=0, row=5, pady=5)
+        self.labelHoraSaidaAlmoco.grid(column=0, row=6, pady=5, padx=5)
         self.entryHoraSaidaAlmoco = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
-        self.entryHoraSaidaAlmoco.grid(column=1, row=5, pady=10)
+        self.entryHoraSaidaAlmoco.grid(column=1, row=6, pady=5, padx=10)
+
+        # Entry e Label com a Hora Entrada Almmoco
+        self.labelHoraEntradaAlmoco = customtkinter.CTkLabel(self, text='Entre com a hora de entrada para almoço:', font=('Montserrat', 14))
+        self.labelHoraEntradaAlmoco.grid(column=0, row=7, pady=5, padx=5)
+        self.entryHoraEntradaAlmoco = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
+        self.entryHoraEntradaAlmoco.grid(column=1, row=7, pady=5, padx=10)
+
+        # Entry e Label com a Hora Saida
+        self.labelHoraSaida = customtkinter.CTkLabel(self, text='Entre com a hora de saída:', font=('Montserrat', 14))
+        self.labelHoraSaida.grid(column=0, row=8, pady=5, padx=5)
+        self.entryHoraSaida = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
+        self.entryHoraSaida.grid(column=1, row=8, pady=5, padx=10)
+
+        # Entry e Label com a Quantidade Hora Almoço
+        self.labelQtdHoraAlmoco = customtkinter.CTkLabel(self, text='Entre com a Qtd hora almoço:', font=('Montserrat', 14))
+        self.labelQtdHoraAlmoco.grid(column=0, row=9, pady=5, padx=5)
+        self.entryQtdHoraAlmoco = FormattedEntry(self, placeholder_text='Ex: 00:00', border_color='#008485', width=200, format_type='time')
+        self.entryQtdHoraAlmoco.grid(column=1, row=9, pady=5, padx=10)
+        
+        # Entry com as observações
+        self.entryObservacoesHora = customtkinter.CTkEntry(self, placeholder_text='Observações', border_color='#008485', width=450, height=25)
+        self.entryObservacoesHora.place(relx=0.5, rely=0.75, anchor='center')
+        
+        # Abre espaco vazio para organizar 
+        self.vazio = customtkinter.CTkLabel(self, text='')
+        self.vazio.grid(column=0, row=10, pady=10) 
+        self.vazio = customtkinter.CTkLabel(self, text='')
+        self.vazio.grid(column=0, row=11, pady=10) 
+        
+        # Instancia do  botao de salar dados
+        self.botaoSalvarDados = botaoSalvaDados(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoSalvarDados.grid(column=0, row=11, padx=50 ,pady=20)
+        
+        # Instancia do botao limpar dados
+        self.botaoLimpaDados = botaoLimparCampos(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoLimpaDados.grid(column=1, row=11, pady=20)
         
         # Chama a classe que gera o botao para voltar a pagina inicial
-        self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
-        self.botaoPaginaInicial.place(relx=0.5, rely=0.85, anchor='center')
+        self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=450)
+        self.botaoPaginaInicial.place(relx=0.5, rely=0.95, anchor='center')
         
         # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
     
-    def salvaDados(self):
+    def salvarDados(self):
         ano = self.comboBoxAnoTrabalho.get()
         mes = self.comboBoxMesTrabalho.get()
         dataTrabalho = self.entryDataTRabalho.get()
         cargaHoraria = self.entryCargaHoraria.get()
         horaEntrada = self.entryHoraEntrada.get()
         horaSaidaAlmoco = self.entryHoraSaidaAlmoco.get()
+        horaEntradaAlmoco = self.entryHoraEntradaAlmoco.get()
+        horaSaida = self.entryHoraSaida.get()
+        qtdHoraAlmoco = self.entryQtdHoraAlmoco.get()
+        observacoes = self.entryObservacoesHora.get()
         
+        trabalho = horasTrabalhadas(mes, ano, dataTrabalho, cargaHoraria, horaEntrada, horaSaidaAlmoco, horaEntradaAlmoco, horaSaida, observacoes, qtdHoraAlmoco)
+        horaTrabalho.append(trabalho)
+        horasTrabalhadas.atualizaExcel(horaTrabalho, 'controleFinanceiro.xlsx')
 
 # Classe da janela do modulo InvestimentoSalario
 class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
