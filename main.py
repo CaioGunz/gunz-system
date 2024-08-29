@@ -143,6 +143,40 @@ class FormattedEntry(customtkinter.CTkEntry):
         
         return formatted_time
 
+class JanelaAnotacaoContas(customtkinter.CTkToplevel):
+    
+    def __init__(self, parent, janelaInicial):
+        super().__init__()
+        
+        self.parent = parent
+        self.janelaInicial = janelaInicial
+        self.resizable(width=False, height=False)
+        self.geometry('500x500')
+        # Configuracao do icone da pagina
+        self.after(200, lambda: self.iconbitmap('assets/logoGrande-40x40.ico'))
+        self.title('Gunz System - Anotacao Contas')
+        
+        self.tituloPrincipalAnotacoesContas = customtkinter.CTkLabel(self, text='Gastos Anotados', font=('Montserrat', 20))
+        self.tituloPrincipalAnotacoesContas.place(relx=0.5, rely=0.05, anchor='center')
+        
+        # Abre espaco vazio para organizar
+        self.vazio = customtkinter.CTkLabel(self, text='')
+        self.vazio.grid(column=0, row=1, pady=10)
+        
+        # Combo box com os valores do ano anotacao
+        self.comboBoxAnoAnotacao = customtkinter.CTkComboBox(self, values=["Selecione o ano"] + anos, width=150, border_color='#008485')
+        self.comboBoxAnoAnotacao.grid(column=0, row=2, padx=60)
+
+        # Combo box com os valores do mes anotacao
+        self.comboBoxMesAnotacao = customtkinter.CTkComboBox(self, values=["Selecione o mês"] + mes, width=150, border_color='#008485')
+        self.comboBoxMesAnotacao.grid(column=1, row=2, padx=10)    
+
+
+
+        # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
+        self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
+        self.parent.iconify()
+        
 # Classe da janela do modulo HorasTrabalho
 class JanelaHorasTrabalhada(customtkinter.CTkToplevel):
     
@@ -568,21 +602,25 @@ class Janelas(customtkinter.CTk):
         self.tituloJanelaPrincipal = customtkinter.CTkLabel(self, text="Sistema de Controle Financeiro", font=('Montserrat', 20))
         self.tituloJanelaPrincipal.grid(column=1, row=1, columnspan=1, pady=10) 
         
-        # Botao Para acesso a janela do modulo Faculdade
-        self.botaoFaculdade = customtkinter.CTkButton(self, text="Faculdade", command=lambda: JanelaFaculdade(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
-        self.botaoFaculdade.grid(column=1, row=2, columnspan=1, pady=10)
-
+        # Botao Para acesso a janela do modulo Contas de Casa
+        self.botaoAnotacaoGastos = customtkinter.CTkButton(self, text="Anotação Gastos", command=lambda: JanelaAnotacaoContas(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
+        self.botaoAnotacaoGastos.grid(column=1, row=2, columnspan=1, pady=10)        
+        
         # Botao Para acesso a janela do modulo Contas de Casa
         self.botaoContasDeCasa = customtkinter.CTkButton(self, text="Contas de Casa", command=lambda: JanelaContasDeCasa(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
-        self.botaoContasDeCasa.grid(column=1, row=3, columnspan=1, pady=10)
+        self.botaoContasDeCasa.grid(column=1, row=3, columnspan=1, pady=10)        
+        
+        # Botao Para acesso a janela do modulo Faculdade
+        self.botaoFaculdade = customtkinter.CTkButton(self, text="Faculdade", command=lambda: JanelaFaculdade(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
+        self.botaoFaculdade.grid(column=1, row=4, columnspan=1, pady=10)
 
         # Botao Para acesso a janela do modulo Contas de Casa
         self.botaoInvestimentoSalario = customtkinter.CTkButton(self, text="Investimento e Salario", command=lambda: JanelaInvestimentoSalario(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
-        self.botaoInvestimentoSalario.grid(column=1, row=4, columnspan=1, pady=10)
+        self.botaoInvestimentoSalario.grid(column=1, row=5, columnspan=1, pady=10)
 
         # Botao Para acesso a janela do modulo Contas de Casa
-        self.botaoHorasTRabalhadas = customtkinter.CTkButton(self, text="Horas Trabalhadas", command=lambda: JanelaHorasTrabalhada(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
-        self.botaoHorasTRabalhadas.grid(column=1, row=5, columnspan=1, pady=10)
+        self.botaoHorasTrabalhadas = customtkinter.CTkButton(self, text="Horas Trabalhadas", command=lambda: JanelaHorasTrabalhada(self, self), font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638')
+        self.botaoHorasTrabalhadas.grid(column=1, row=6, columnspan=1, pady=10)
         
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self))
     
