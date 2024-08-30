@@ -2,6 +2,7 @@ import pandas as pd
 import customtkinter
 import tkinter as tk
 import requests
+from tkinter import ttk, Scrollbar
 from typing import Tuple
 from tkinter import messagebox
 from datetime import datetime
@@ -9,14 +10,28 @@ from classes.faculdade import Faculdade
 from classes.contasCasa import contasDeCasa
 from classes.investimentosSalario import InvestimentosSalario
 from classes.horasTrabalho import horasTrabalhadas
+from classes.anotacaoContas import anotacaoContas
 
 faculdades = []
 contaCasa = []
 investimentos = []
 horaTrabalho = []
+anotacaoConta = []
 
 # Lista com os meses usados na pagina de investimento
-mes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+mes = ['Janeiro', 
+       'Fevereiro', 
+       'Março', 
+       'Abril', 
+       'Maio', 
+       'Junho', 
+       'Julho', 
+       'Agosto', 
+       'Setembro', 
+       'Outubro', 
+       'Novembro', 
+       'Dezembro']
+
 # Lista com o ano Usado na pagina de investimento
 anoAtual = datetime.now().year
 anos = [str(anoAtual - 2), str(anoAtual -1), str(anoAtual)]
@@ -147,7 +162,6 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
     
     def __init__(self, parent, janelaInicial):
         super().__init__()
-        
         self.parent = parent
         self.janelaInicial = janelaInicial
         self.resizable(width=False, height=False)
@@ -171,11 +185,277 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         self.comboBoxMesAnotacao = customtkinter.CTkComboBox(self, values=["Selecione o mês"] + mes, width=150, border_color='#008485')
         self.comboBoxMesAnotacao.grid(column=1, row=2, padx=10)    
 
+        # Combo box com os valores da categoria
+        categoria = ['Alimentação', 
+                     'Transporte',
+                     'Contas de Casa/Mês', 
+                     'Limpeza e higiene(Produtos)', 
+                     'Planos Assinados (Cartao Tbm)', 
+                     'Mobília e Eletrodomésticos', 
+                     'Financiamento carro', 
+                     'Financiamento Casa']
+        self.comboBoxCategoria = customtkinter.CTkComboBox(self, values=["Selecione a categoria"] + categoria, width=300, border_color='#008485')
+        self.comboBoxCategoria.place(relx=0.5, rely=0.2, anchor='center')  
+          
+        # Entry para descricao da conta
+        self.entryDescricaoConta = customtkinter.CTkEntry(self, placeholder_text='Entre com a descrição da conta: Ex: Ifood', border_color='#008485', width=400)
+        self.entryDescricaoConta.place(relx=0.5, rely=0.28, anchor='center')
+
+        # Entry para descricao da conta
+        self.entryValorConta = customtkinter.CTkEntry(self, placeholder_text='Entre com o valor da conta: Ex: 250', border_color='#008485', width=400)
+        self.entryValorConta.place(relx=0.5, rely=0.36, anchor='center')
+
+        # Entry para Data da conta
+        self.entryDataConta = FormattedEntry(self, placeholder_text='Entre com a data da conta: Ex: 01/01/2024', border_color='#008485', width=400, format_type='date')
+        self.entryDataConta.place(relx=0.5, rely=0.44, anchor='center')
+
+        # Checkbox para caso marcado seja positivo e nao marcado negativo
+        self.checkBoxPagoContas = customtkinter.CTkCheckBox(self, text='Pago', font=('Montserrat', 14), command=self.atualizaCheckBox)
+        self.checkBoxPagoContas.place(relx=0.2, rely=0.62)
+        # Variavel parav armazenar o estado do checkbox
+        self.varPago = customtkinter.StringVar(value='Não')
+        
+        # Entry para a observacao caso aja
+        self.entryObeservacaoConta = customtkinter.CTkEntry(self, placeholder_text='Entre com a Obeservacao da conta', border_color='#008485', width=400, height=50)
+        self.entryObeservacaoConta.place(relx=0.5, rely=0.54, anchor='center')
+
+        # Instancia do  botao de salar dados
+        self.botaoSalvarDados = botaoSalvaDados(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoSalvarDados.place(relx=0.2, rely=0.72)
+        
+        # Instancia do botao limpar dados
+        self.botaoLimpaDados = botaoLimparCampos(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
+        self.botaoLimpaDados.place(relx=0.5, rely=0.72)
+        
+        # Botão para abrir nova janela
+        self.botaoAbrirJanela = customtkinter.CTkButton(self, text="Abrir Edição de Dados", command=self.abrirVisualizacao, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
+        self.botaoAbrirJanela.place(relx=0.5, rely=0.83, anchor='center')
+        
+        # Chama a classe que gera o botao para voltar a pagina inicial
+        self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
+        self.botaoPaginaInicial.place(relx=0.5, rely=0.93, anchor='center')
 
 
         # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
+
+    def abrirVisualizacao(self):
+        # Configuração da janela
+        self.janela_visualizacao = customtkinter.CTkToplevel(self)
+        self.janela_visualizacao.geometry('600x600')
+        self.janela_visualizacao.title('Gunz System - Anotacao Contas - Edicao de Dados')
+        self.janela_visualizacao.after(200, lambda: self.janela_visualizacao.iconbitmap('assets/logoGrande-40x40.ico'))
+
+        # Titulo da pagina
+        self.tituloNovaJanela = customtkinter.CTkLabel(self.janela_visualizacao, text='Edição de Dados', font=('Montserrat', 18))
+        self.tituloNovaJanela.pack(pady=20)
+
+        # Janela de visualizacao dos dados
+        frame_treeview = customtkinter.CTkFrame(self.janela_visualizacao)
+        frame_treeview.pack(padx=20, pady=10, fill="both", expand=True)
+
+        scrollbar_y = Scrollbar(frame_treeview, orient="vertical")
+        scrollbar_y.pack(side="right", fill="y")
+
+        scrollbar_x = Scrollbar(frame_treeview, orient="horizontal")
+        scrollbar_x.pack(side="bottom", fill="x")
+
+        # Configuracao das colunas
+        self.treeview = ttk.Treeview(frame_treeview, columns=("ID", "Mes", "Ano", "Categoria", "Descricao", "Valor", "Data Compra", "Pago", "Observacao"), show="headings", yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+        self.treeview.pack(fill="both", expand=True)
+        
+        scrollbar_y.config(command=self.treeview.yview)
+        scrollbar_x.config(command=self.treeview.xview)
+
+        # Configuracao do nome das colunas
+        self.treeview.heading("ID", text="ID")
+        self.treeview.heading("Mes", text="Mês")
+        self.treeview.heading("Ano", text="Ano")
+        self.treeview.heading("Categoria", text="Categoria")
+        self.treeview.heading("Descricao", text="Descrição")
+        self.treeview.heading("Valor", text="Valor")
+        self.treeview.heading("Data Compra", text="Data")
+        self.treeview.heading("Pago", text="Pago")
+        self.treeview.heading("Observacao", text="Observação")
+
+        # Configuracao do tamanho das colunas
+        self.treeview.column("ID", width=50)
+        self.treeview.column("Mes", width=100)
+        self.treeview.column("Ano", width=100)
+        self.treeview.column("Categoria", width=150)
+        self.treeview.column("Descricao", width=150)
+        self.treeview.column("Valor", width=100)
+        self.treeview.column("Data Compra", width=100)
+        self.treeview.column("Pago", width=80)
+        self.treeview.column("Observacao", width=200)
+
+        # Botao para exibir os dados
+        self.botaoExibirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Exibir Dados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.exibir_dados)
+        self.botaoExibirDados.pack(pady=10)
+
+        # Botao para editar os dados
+        self.botaoEditarDados = customtkinter.CTkButton(self.janela_visualizacao, text="Editar Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.editar_dados)
+        self.botaoEditarDados.pack(pady=10)
+
+        # Botao para salvar as alteracoes
+        self.botaoSalvarAlteracoes = customtkinter.CTkButton(self.janela_visualizacao, text="Salvar Alterações", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.salvarDadosEditados)
+        self.botaoSalvarAlteracoes.pack(pady=10)
+
+        # Botao para excluir dados
+        self.botaoExcluirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Excluir Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.excluir_dados)
+        self.botaoExcluirDados.pack(pady=10)
+
+        # Botao para fechar a janela
+        self.botaoFecharJanela = customtkinter.CTkButton(self.janela_visualizacao, text="Fechar", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.janela_visualizacao.destroy)
+        self.botaoFecharJanela.pack(pady=20)
+        
+        # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
+        self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
+        self.parent.iconify()
+
+    def atualizaCheckBox(self):
+        self.varPago.set('Sim' if self.checkBoxPagoContas.get() else 'Não')
+
+    def salvarDados(self):
+        ano = self.comboBoxAnoAnotacao.get()
+        mes = self.comboBoxMesAnotacao.get()
+        categoria = self.comboBoxCategoria.get()
+        descricao = self.entryDescricaoConta.get()
+        valor = self.entryValorConta.get()
+        data = self.entryDataConta.get()
+        pago = self.varPago.get()
+        observacao = self.entryObeservacaoConta.get()
+        
+        nova_conta = anotacaoContas(mes, ano, categoria, descricao, valor, data, pago, observacao)
+        dados_novo = nova_conta.dicionarioDados()
+        
+        try:
+            # Carregar dados existentes do Excel
+            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
+            lista_contas_existentes = df.to_dict(orient='records')
+            
+            # Verificar se o novo dado já existe
+            ids_existentes = set(row['ID'] for row in lista_contas_existentes)
+            if dados_novo['ID'] in ids_existentes:
+                print("Registro já existe. Não adicionando.")
+                return
+            
+            # Adicionar novo registro
+            lista_contas_existentes.append(dados_novo)
+            
+            # Criar DataFrame e salvar
+            df = pd.DataFrame(lista_contas_existentes)
+            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
+            
+            print("Dados salvos com sucesso!")
+        except FileNotFoundError:
+            # Criar DataFrame com o novo registro se o arquivo não existir
+            df = pd.DataFrame([dados_novo])
+            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
+            print("Arquivo criado e dados salvos com sucesso!")
+
+    def exibir_dados(self):
+        # Limpa a tabela antes de carregar os dados
+        for item in self.treeview.get_children():
+            self.treeview.delete(item)
+        
+        # Carrega os dados do arquivo Excel
+        try:
+            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
+            for index, row in df.iterrows():
+                # Use o ID da linha como iid
+                self.treeview.insert("", "end", iid=row['ID'], values=tuple(row))
+        except Exception as e:
+            messagebox.showerror('Erro', f"Erro ao carregar os dados: {e}")
+    
+    def editar_dados(self):
+        selected_item = self.treeview.selection()
+        if not selected_item:
+            messagebox.showwarning("Aviso", "Selecione um dado para editar.")
+            return
+
+        item_id = selected_item[0]  # Obtém o ID do item selecionado
+        item = self.treeview.item(item_id)
+        
+        if 'values' not in item:
+            messagebox.showwarning("Aviso", "Item selecionado não contém valores.")
+            return
+
+        valores = item['values']  # Obtém os valores do item selecionado
+
+        # Carrega os dados nos campos para edição
+        self.carregarDadosParaEditar(valores)
+
+        # Define o método de salvar para o botão de salvar alterações
+        self.botaoSalvarAlteracoes.configure(command=lambda: self.salvarDadosEditados(item_id))
+    
+    def carregarDadosParaEditar(self, valores):
+        # Carrega os dados nos campos para edição
+        self.comboBoxAnoAnotacao.set(valores[2])
+        self.comboBoxMesAnotacao.set(valores[1])
+        self.comboBoxCategoria.set(valores[3])
+        self.entryDescricaoConta.insert(0, valores[4])
+        self.entryValorConta.insert(0, valores[5])
+        self.entryDataConta.insert(0, valores[6])
+        self.varPago.set(valores[7])
+        self.entryObeservacaoConta.insert(0, valores[8])
+
+    def salvarDadosEditados(self, id_editar):
+
+        if not id_editar:
+            messagebox.showwarning("Aviso", "ID do item não encontrado.")
+            return
+
+        try:
+            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
+            df['ID'] = df['ID'].astype(str)  # Converta IDs no DataFrame para string
+            id_editar = str(id_editar)  # Converta o ID para string
+
+            print(df.head())  # Imprima as primeiras linhas do DataFrame para verificar
+
+            index = df[df['ID'] == id_editar].index
+            
+            if index.empty:
+                messagebox.showwarning("Aviso", "ID do item não encontrado no DataFrame.")
+                return
+
+            # Atualiza o primeiro índice encontrado
+            index = index[0]
+
+            # Atualiza os valores
+            df.at[index, 'Mes'] = self.comboBoxMesAnotacao.get()
+            df.at[index, 'Ano'] = int(self.comboBoxAnoAnotacao.get())
+            df.at[index, 'Categoria'] = self.comboBoxCategoria.get()
+            df.at[index, 'Descricao'] = self.entryDescricaoConta.get()
+            df.at[index, 'Valor'] = float(self.entryValorConta.get())
+            df.at[index, 'Data Compra'] = self.entryDataConta.get()
+            df.at[index, 'Pago'] = self.varPago.get()
+            df.at[index, 'Observacao'] = self.entryObeservacaoConta.get()
+
+            # Salva as alterações
+            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
+            self.exibir_dados()  # Atualiza a tabela
+
+        except Exception as e:
+            messagebox.showerror('Error', f"Erro ao atualizar os dados: {e}")
+    
+    def excluir_dados(self):
+        selected_item = self.treeview.selection()
+        if not selected_item:
+            messagebox.showwarning("Aviso", "Selecione um dado para excluir.")
+            return
+
+        item_id = selected_item[0]
+        if messagebox.askyesno("Confirmação", "Você realmente deseja excluir este item?"):
+            try:
+                df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
+                df = df[df['ID'] != item_id]  # Remove a linha com o ID selecionado
+                df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
+                self.exibir_dados()  # Atualiza a tabela
+                print("Dados excluídos com sucesso!")
+            except Exception as e:
+                messagebox.showerror('Erro', f"Erro ao excluir os dados: {e}")        
         
 # Classe da janela do modulo HorasTrabalho
 class JanelaHorasTrabalhada(customtkinter.CTkToplevel):
@@ -286,7 +566,16 @@ class JanelaHorasTrabalhada(customtkinter.CTkToplevel):
         qtdHoraAlmoco = self.entryQtdHoraAlmoco.get()
         observacoes = self.entryObservacoesHora.get()
         
-        trabalho = horasTrabalhadas(mes, ano, dataTrabalho, cargaHoraria, horaEntrada, horaSaidaAlmoco, horaEntradaAlmoco, horaSaida, observacoes, qtdHoraAlmoco)
+        trabalho = horasTrabalhadas(mes, 
+                                    ano, 
+                                    dataTrabalho, 
+                                    cargaHoraria, 
+                                    horaEntrada, 
+                                    horaSaidaAlmoco, 
+                                    horaEntradaAlmoco, 
+                                    horaSaida, 
+                                    observacoes, 
+                                    qtdHoraAlmoco)
         horaTrabalho.append(trabalho)
         horasTrabalhadas.atualizaExcel(horaTrabalho, 'controleFinanceiro.xlsx')
 
@@ -313,7 +602,9 @@ class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
         self.vazio.grid(column=0, row=1, pady=10)        
         
         # Lista com o tipo de investimento e se é salario ou não
-        tipoInvestimento = ['Investimento', 'Reserva de Emergência', 'Salário']
+        tipoInvestimento = ['Investimento', 
+                            'Reserva de Emergência', 
+                            'Salário']
         
         # Combo box com os valores do ano do investimento
         self.comboBoxAnoInvestimento = customtkinter.CTkComboBox(self, values=["Selecione o ano"] + anos, width=150, border_color='#008485')
@@ -357,7 +648,10 @@ class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
         tipoInvestimento = self.comboBoxTipoInvestimento.get()
         valor = self.entryValorInvestido.get()
 
-        investimento = InvestimentosSalario(mes, ano, tipoInvestimento, valor)
+        investimento = InvestimentosSalario(mes, 
+                                            ano, 
+                                            tipoInvestimento, 
+                                            valor)
         investimentos.append(investimento)
         InvestimentosSalario.atualizaExcel(investimentos, 'controleFinanceiro.xlsx')
         investimentos.clear()
@@ -428,9 +722,13 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.botaoLimpaDados = botaoLimparCampos(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
         self.botaoLimpaDados.grid(column=1, row=8)
         
+        # Botão para abrir nova janela
+        self.botaoAbrirJanela = customtkinter.CTkButton(self, text="Abrir Edição de Dados", command=self.abrirVisualizacao, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
+        self.botaoAbrirJanela.place(relx=0.5, rely=0.82, anchor='center')
+        
         # Chama a classe que gera o botao para voltar a pagina inicial
         self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
-        self.botaoPaginaInicial.place(relx=0.5, rely=0.85, anchor='center')
+        self.botaoPaginaInicial.place(relx=0.5, rely=0.92, anchor='center')
         
         # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
@@ -439,10 +737,84 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
     # Atualiza o check box para nao bugar o codigo
     def atualizaCheckBoxCasa(self):
         self.varPagoCasa.set('Sim' if self.checkBoxPAgoContasCasa.get() else 'Não')
-    
-    # Função para chamar a classe onde os dados vão ser salvos    
+
+    def abrirVisualizacao(self):
+        # Configuração da janela
+        self.janela_visualizacao = customtkinter.CTkToplevel(self)
+        self.janela_visualizacao.geometry('600x600')
+        self.janela_visualizacao.title('Gunz System - Anotacao Contas - Edicao de Dados')
+        self.janela_visualizacao.after(200, lambda: self.janela_visualizacao.iconbitmap('assets/logoGrande-40x40.ico'))
+
+        # Titulo da pagina
+        self.tituloNovaJanela = customtkinter.CTkLabel(self.janela_visualizacao, text='Edição de Dados', font=('Montserrat', 18))
+        self.tituloNovaJanela.pack(pady=20)
+
+        # Janela de visualizacao dos dados
+        frame_treeview = customtkinter.CTkFrame(self.janela_visualizacao)
+        frame_treeview.pack(padx=20, pady=10, fill="both", expand=True)
+
+        scrollbar_y = Scrollbar(frame_treeview, orient="vertical")
+        scrollbar_y.pack(side="right", fill="y")
+
+        scrollbar_x = Scrollbar(frame_treeview, orient="horizontal")
+        scrollbar_x.pack(side="bottom", fill="x")
+
+        # Configuracao das colunas
+        self.treeview = ttk.Treeview(frame_treeview, columns=("ID", 
+                                                              "Nome Contas", 
+                                                              "Valor", 
+                                                              "Data Vencimento", 
+                                                              "Data Pagamento", 
+                                                              "Pago", 
+                                                              "Observacao",), show="headings", yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+        self.treeview.pack(fill="both", expand=True)
+        
+        scrollbar_y.config(command=self.treeview.yview)
+        scrollbar_x.config(command=self.treeview.xview)
+
+        # Configuracao do nome das colunas
+        self.treeview.heading("ID", text="ID")
+        self.treeview.heading("Nome Contas", text="Nome Contas")
+        self.treeview.heading("Valor", text="Valor")
+        self.treeview.heading("Data Vencimento", text="Data Vencimento")
+        self.treeview.heading("Data Pagamento", text="Data Pagamento")
+        self.treeview.heading("Pago", text="Pago")
+        self.treeview.heading("Observacao", text="Observacao")
+
+        # Configuracao do tamanho das colunas
+        self.treeview.column("ID", width=50)
+        self.treeview.column("Nome Contas", width=100)
+        self.treeview.column("Valor", width=100)
+        self.treeview.column("Data Vencimento", width=150)
+        self.treeview.column("Data Pagamento", width=150)
+        self.treeview.column("Pago", width=100)
+        self.treeview.column("Observacao", width=100)
+
+        # Botao para exibir os dados
+        self.botaoExibirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Exibir Dados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.exibir_dados)
+        self.botaoExibirDados.pack(pady=10)
+
+        # Botao para editar os dados
+        self.botaoEditarDados = customtkinter.CTkButton(self.janela_visualizacao, text="Editar Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.editar_dados)
+        self.botaoEditarDados.pack(pady=10)
+
+        # Botao para salvar as alteracoes
+        self.botaoSalvarAlteracoes = customtkinter.CTkButton(self.janela_visualizacao, text="Salvar Alterações", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.salvarDadosEditados)
+        self.botaoSalvarAlteracoes.pack(pady=10)
+
+        # Botao para excluir dados
+        self.botaoExcluirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Excluir Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.excluir_dados)
+        self.botaoExcluirDados.pack(pady=10)
+
+        # Botao para fechar a janela
+        self.botaoFecharJanela = customtkinter.CTkButton(self.janela_visualizacao, text="Fechar", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.janela_visualizacao.destroy)
+        self.botaoFecharJanela.pack(pady=20)
+        
+        # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
+        self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
+        self.parent.iconify()
+
     def salvarDados(self):
-        #Coletando os dados
         nomeContaDeCasa = self.entryNomeContaCasa.get()
         valorPago = self.entryPagoContaCasa.get()
         pago = self.varPagoCasa.get()
@@ -452,10 +824,159 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         dataEmString2 = self.entryDataPagamentoCasa.get()
         dataPagamento = datetime.strptime(dataEmString2, '%d/%m/%Y')
         
-        conta = contasDeCasa(nomeContaDeCasa, valorPago, dataVencimento, dataPagamento, pago, observacoes)
-        contaCasa.append(conta)
-        contasDeCasa.atualizaExcel(contaCasa, 'controleFinanceiro.xlsx')
-        contaCasa.clear()
+        nova_conta = contasDeCasa(nomeContaDeCasa, 
+                                  valorPago, 
+                                  dataVencimento, 
+                                  dataPagamento, 
+                                  pago, 
+                                  observacoes)
+        dados_novo = nova_conta.dicionarioDados()
+        
+        try:
+            # Carregar dados existentes do Excel
+            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
+            lista_contas_existentes = df.to_dict(orient='records')
+            
+            # Verificar se o novo dado já existe
+            ids_existentes = set(row['ID'] for row in lista_contas_existentes)
+            if dados_novo['ID'] in ids_existentes:
+                print("Registro já existe. Não adicionando.")
+                return
+            
+            # Adicionar novo registro
+            lista_contas_existentes.append(dados_novo)
+            
+            # Criar DataFrame e salvar
+            df = pd.DataFrame(lista_contas_existentes)
+            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
+            
+            print("Dados salvos com sucesso!")
+        except FileNotFoundError:
+            # Criar DataFrame com o novo registro se o arquivo não existir
+            df = pd.DataFrame([dados_novo])
+            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
+            print("Arquivo criado e dados salvos com sucesso!")
+
+    def exibir_dados(self):
+        # Limpa a tabela antes de carregar os dados
+        for item in self.treeview.get_children():
+            self.treeview.delete(item)
+        
+        # Carrega os dados do arquivo Excel
+        try:
+            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
+            for index, row in df.iterrows():
+                # Use o ID da linha como iid
+                self.treeview.insert("", "end", iid=row['ID'], values=tuple(row))
+        except Exception as e:
+            messagebox.showerror('Erro', f"Erro ao carregar os dados: {e}")
+    
+    def editar_dados(self):
+        selected_item = self.treeview.selection()
+        if not selected_item:
+            messagebox.showwarning("Aviso", "Selecione um dado para editar.")
+            return
+
+        item_id = selected_item[0]  # Obtém o ID do item selecionado
+        item = self.treeview.item(item_id)
+        
+        if 'values' not in item:
+            messagebox.showwarning("Aviso", "Item selecionado não contém valores.")
+            return
+
+        valores = item['values']  # Obtém os valores do item selecionado
+
+        # Carrega os dados nos campos para edição
+        self.carregarDadosParaEditar(valores)
+
+        # Define o método de salvar para o botão de salvar alterações
+        self.botaoSalvarAlteracoes.configure(command=lambda: self.salvarDadosEditados(item_id))
+    
+    def carregarDadosParaEditar(self, valores):
+        # Carrega os dados nos campos para edição
+        self.entryNomeContaCasa.set(valores[2])
+        self.entryPagoContaCasa.set(valores[1])
+        self.varPagoCasa.set(valores[3])
+        self.entryObservacao.insert(0, valores[4])
+        self.entryDataVencimentoCasa.insert(0, valores[5])
+        self.entryDataPagamentoCasa.insert(0, valores[6])
+
+    def salvarDadosEditados(self, id_editar):
+
+        if not id_editar:
+            messagebox.showwarning("Aviso", "ID do item não encontrado.")
+            return
+
+        try:
+            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
+            df['ID'] = df['ID'].astype(str)  # Converta IDs no DataFrame para string
+            id_editar = str(id_editar)  # Converta o ID para string
+
+            print(df.head())  # Imprima as primeiras linhas do DataFrame para verificar
+
+            index = df[df['ID'] == id_editar].index
+            
+            if index.empty:
+                messagebox.showwarning("Aviso", "ID do item não encontrado no DataFrame.")
+                return
+
+            # Atualiza o primeiro índice encontrado
+            index = index[0]
+
+            # Atualiza os valores
+            df.at[index, 'Nome Contas'] = self.entryNomeContaCasa.get()
+            df.at[index, 'Valor'] = int(self.entryPagoContaCasa.get())
+            df.at[index, 'Data Vencimento'] = self.entryDataVencimentoCasa.get()
+            df.at[index, 'Data Pagamento'] = self.entryDataPagamentoCasa.get()
+            df.at[index, 'Pago'] = float(self.varPagoCasa.get())
+            df.at[index, 'Observacao'] = self.entryObservacao.get()
+
+            # Salva as alterações
+            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
+            self.exibir_dados()  # Atualiza a tabela
+
+        except Exception as e:
+            messagebox.showerror('Error', f"Erro ao atualizar os dados: {e}")
+    
+    def excluir_dados(self):
+        selected_item = self.treeview.selection()
+        if not selected_item:
+            messagebox.showwarning("Aviso", "Selecione um dado para excluir.")
+            return
+
+        item_id = selected_item[0]
+        if messagebox.askyesno("Confirmação", "Você realmente deseja excluir este item?"):
+            try:
+                df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
+                df = df[df['ID'] != item_id]  # Remove a linha com o ID selecionado
+                df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
+                self.exibir_dados()  # Atualiza a tabela
+                print("Dados excluídos com sucesso!")
+            except Exception as e:
+                messagebox.showerror('Erro', f"Erro ao excluir os dados: {e}")        
+        
+  
+    # # Função para chamar a classe onde os dados vão ser salvos    
+    # def salvarDados(self):
+    #     #Coletando os dados
+    #     nomeContaDeCasa = self.entryNomeContaCasa.get()
+    #     valorPago = self.entryPagoContaCasa.get()
+    #     pago = self.varPagoCasa.get()
+    #     observacoes = self.entryObservacao.get()
+    #     dataEmString = self.entryDataVencimentoCasa.get()
+    #     dataVencimento = datetime.strptime(dataEmString, '%d/%m/%Y')
+    #     dataEmString2 = self.entryDataPagamentoCasa.get()
+    #     dataPagamento = datetime.strptime(dataEmString2, '%d/%m/%Y')
+        
+    #     conta = contasDeCasa(nomeContaDeCasa, 
+    #                          valorPago, 
+    #                          dataVencimento, 
+    #                          dataPagamento, 
+    #                          pago, 
+    #                          observacoes)
+    #     contaCasa.append(conta)
+    #     contasDeCasa.atualizaExcel(contaCasa, 'controleFinanceiro.xlsx')
+    #     contaCasa.clear()
                
 # Classe da janela do modulo Faculdade
 class JanelaFaculdade(customtkinter.CTkToplevel):
@@ -575,7 +1096,16 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         dataMensalidade = datetime.strptime(dataEmString, '%d/%m/%Y')
         pagoFaculdade = self.varPago.get()
         
-        faculdade = Faculdade(nomeMateria, notaAtividade1, notaAtividade2, notaAtividade3, notaAtividade4, notaMapa, notaSGC, valorMensalidade, dataMensalidade, pagoFaculdade)
+        faculdade = Faculdade(nomeMateria, 
+                              notaAtividade1, 
+                              notaAtividade2, 
+                              notaAtividade3, 
+                              notaAtividade4, 
+                              notaMapa, 
+                              notaSGC, 
+                              valorMensalidade, 
+                              dataMensalidade, 
+                              pagoFaculdade)
         faculdades.append(faculdade)
         Faculdade.atualizaExcel(faculdades, 'controleFinanceiro.xlsx')
         faculdades.clear()

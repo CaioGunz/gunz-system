@@ -1,4 +1,6 @@
 import pandas as pd
+import uuid
+import os
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from datetime import datetime
@@ -14,6 +16,7 @@ class contasDeCasa:
     
     def dicionarioDados(self):
         return {
+            'ID': str(uuid.uuid4()),
             'Nome Contas': self.nomeContas,
             'Valor': self.valor,
             'Data Vencimento': self.dataVencimento,
@@ -25,10 +28,16 @@ class contasDeCasa:
     @staticmethod
     def atualizaExcel(listaContas, nomeArquivo):
         try:
-            # Verifica se o arquivo existe
-            try:
-                workbook = load_workbook(nomeArquivo)
-            except FileNotFoundError:
+            # Verifica se o arquivo existe e se é válido
+            if os.path.exists(nomeArquivo):
+                try:
+                    workbook = load_workbook(nomeArquivo)
+                except Exception as e:
+                    print(f"Arquivo corrompido, recriando... Erro: {e}")
+                    os.remove(nomeArquivo)
+                    workbook = Workbook()
+                    workbook.remove(workbook.active)
+            else:
                 workbook = Workbook()
                 workbook.remove(workbook.active)
                 
@@ -36,7 +45,13 @@ class contasDeCasa:
             if sheet_name not in workbook.sheetnames:
                 worksheet = workbook.create_sheet(sheet_name)
                 # Escreve os cabeçalhos
-                headers = ['Nome Contas', 'Valor', 'Data Vencimento', 'Data Pagamento', 'Pago', 'Observacao']
+                headers = ['ID', 
+                           'Nome Contas', 
+                           'Valor', 
+                           'Data Vencimento', 
+                           'Data Pagamento', 
+                           'Pago', 
+                           'Observacao']
                 worksheet.append(headers)
             else:
                 worksheet = workbook[sheet_name]
@@ -44,14 +59,14 @@ class contasDeCasa:
             # Verifica se os dados já existem
             existing_entries = set()
             for row in worksheet.iter_rows(min_row=2, values_only=True):
-                existing_entries.add(tuple(row))
+                existing_entries.add(row[0])
 
             # Converte os dados das contas em um DataFrame
             df = pd.DataFrame([conta.dicionarioDados() for conta in listaContas])
 
             # Adiciona as novas linhas ao worksheet
             for row in dataframe_to_rows(df, index=False, header=False):
-                if tuple(row) not in existing_entries:
+                if row[0] not in existing_entries: # Checa se o ID ja existe
                     worksheet.append(row)
             
             # Formato para data
