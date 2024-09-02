@@ -2,6 +2,8 @@ import pandas as pd
 import customtkinter
 import tkinter as tk
 import requests
+import os
+from openpyxl import load_workbook, Workbook
 from tkinter import ttk, Scrollbar
 from typing import Tuple
 from tkinter import messagebox
@@ -244,7 +246,7 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         # Configuração da janela
         self.janela_visualizacao = customtkinter.CTkToplevel(self)
         self.janela_visualizacao.geometry('600x600')
-        self.janela_visualizacao.title('Gunz System - Anotacao Contas - Edicao de Dados')
+        self.janela_visualizacao.title('Gunz System - Edicao de Dados')
         self.janela_visualizacao.after(200, lambda: self.janela_visualizacao.iconbitmap('assets/logoGrande-40x40.ico'))
 
         # Titulo da pagina
@@ -355,108 +357,92 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
             df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
             print("Arquivo criado e dados salvos com sucesso!")
 
+    # Funcao para realizar a exibicao de dados na nova janela       
     def exibir_dados(self):
-        # Limpa a tabela antes de carregar os dados
-        for item in self.treeview.get_children():
-            self.treeview.delete(item)
+        # Carregar os dados do Excel
+        df = contasDeCasa.carregarDadosExcel('controleFinanceiro.xlsx')
+        # Limpar o Treeview antes de adicionar novos dados
+        for row in self.treeview.get_children():
+            self.treeview.delete(row)
         
-        # Carrega os dados do arquivo Excel
-        try:
-            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
-            for index, row in df.iterrows():
-                # Use o ID da linha como iid
-                self.treeview.insert("", "end", iid=row['ID'], values=tuple(row))
-        except Exception as e:
-            messagebox.showerror('Erro', f"Erro ao carregar os dados: {e}")
-    
-    def editar_dados(self):
+        # Preencher o Treeview com os dados
+        for _, row in df.iterrows():
+            self.treeview.insert('', 'end', values=tuple(row))
+
+    # Funcao para realizar a edicao dos dados na nova janela
+    def editarDados(self):
+        # Obter os dados selecionados
         selected_item = self.treeview.selection()
-        if not selected_item:
-            messagebox.showwarning("Aviso", "Selecione um dado para editar.")
-            return
-
-        item_id = selected_item[0]  # Obtém o ID do item selecionado
-        item = self.treeview.item(item_id)
-        
-        if 'values' not in item:
-            messagebox.showwarning("Aviso", "Item selecionado não contém valores.")
-            return
-
-        valores = item['values']  # Obtém os valores do item selecionado
-
-        # Carrega os dados nos campos para edição
-        self.carregarDadosParaEditar(valores)
-
-        # Define o método de salvar para o botão de salvar alterações
-        self.botaoSalvarAlteracoes.configure(command=lambda: self.salvarDadosEditados(item_id))
-    
-    def carregarDadosParaEditar(self, valores):
-        # Carrega os dados nos campos para edição
-        self.comboBoxAnoAnotacao.set(valores[2])
-        self.comboBoxMesAnotacao.set(valores[1])
-        self.comboBoxCategoria.set(valores[3])
-        self.entryDescricaoConta.insert(0, valores[4])
-        self.entryValorConta.insert(0, valores[5])
-        self.entryDataConta.insert(0, valores[6])
-        self.varPago.set(valores[7])
-        self.entryObeservacaoConta.insert(0, valores[8])
-
-    def salvarDadosEditados(self, id_editar):
-
-        if not id_editar:
-            messagebox.showwarning("Aviso", "ID do item não encontrado.")
-            return
-
-        try:
-            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
-            df['ID'] = df['ID'].astype(str)  # Converta IDs no DataFrame para string
-            id_editar = str(id_editar)  # Converta o ID para string
-
-            print(df.head())  # Imprima as primeiras linhas do DataFrame para verificar
-
-            index = df[df['ID'] == id_editar].index
+        if selected_item:
+            item_data = self.treeview.item(selected_item)['values']
+            # Aqui você pode exibir os dados nos campos de entrada para edicao
+            self.entryNomeContaCasa.delete(0, 'end')
+            self.entryNomeContaCasa.insert(0, item_data[1])  # Nome Conta
+            self.entryPagoContaCasa.delete(0, 'end')
+            self.entryPagoContaCasa.insert(0, item_data[2])  # Valor
+            self.entryDataVencimentoCasa.delete(0, 'end')
+            self.entryDataVencimentoCasa.insert(0, item_data[3])  # Data Vencimento
+            self.entryDataPagamentoCasa.delete(0, 'end')
+            self.entryDataPagamentoCasa.insert(0, item_data[4])  # Data Pagamento
+            self.entryObservacao.delete(0, 'end')
+            self.entryObservacao.insert(0, item_data[6])  # Observacao
             
-            if index.empty:
-                messagebox.showwarning("Aviso", "ID do item não encontrado no DataFrame.")
-                return
+            # Usa o set em vez do delete/inset para varPagoCasa
+            self.varPagoCasa.set(item_data[5]) # Pago
 
-            # Atualiza o primeiro índice encontrado
-            index = index[0]
-
-            # Atualiza os valores
-            df.at[index, 'Mes'] = self.comboBoxMesAnotacao.get()
-            df.at[index, 'Ano'] = int(self.comboBoxAnoAnotacao.get())
-            df.at[index, 'Categoria'] = self.comboBoxCategoria.get()
-            df.at[index, 'Descricao'] = self.entryDescricaoConta.get()
-            df.at[index, 'Valor'] = float(self.entryValorConta.get())
-            df.at[index, 'Data Compra'] = self.entryDataConta.get()
-            df.at[index, 'Pago'] = self.varPago.get()
-            df.at[index, 'Observacao'] = self.entryObeservacaoConta.get()
-
-            # Salva as alterações
-            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
-            self.exibir_dados()  # Atualiza a tabela
-
-        except Exception as e:
-            messagebox.showerror('Error', f"Erro ao atualizar os dados: {e}")
-    
-    def excluir_dados(self):
+    # Funcao para salvar os dados editados na nova janela
+    def salvarDadosEditados(self):
+        # Captura os dados do formulário de edição
         selected_item = self.treeview.selection()
         if not selected_item:
-            messagebox.showwarning("Aviso", "Selecione um dado para excluir.")
+            messagebox.showwarning("Nenhum item selecionado")
             return
-
-        item_id = selected_item[0]
-        if messagebox.askyesno("Confirmação", "Você realmente deseja excluir este item?"):
-            try:
-                df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
-                df = df[df['ID'] != item_id]  # Remove a linha com o ID selecionado
-                df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
-                self.exibir_dados()  # Atualiza a tabela
-                print("Dados excluídos com sucesso!")
-            except Exception as e:
-                messagebox.showerror('Erro', f"Erro ao excluir os dados: {e}")        
         
+        # Obtém o ID do item selecionado
+        id_selecionado = self.treeview.item(selected_item)['values'][0]
+
+        # Coletar os dados atualizados do formulário
+        nome_conta = self.entryNomeContaCasa.get()
+        valor_pago = self.entryPagoContaCasa.get()
+        data_vencimento = self.entryDataVencimentoCasa.get()
+        data_pagamento = self.entryDataPagamentoCasa.get()
+        pago = self.varPagoCasa.get()
+        observacao = self.entryObservacao.get()
+
+        # Atualize o Treeview com os novos dados
+        self.treeview.item(selected_item, values=(id_selecionado, nome_conta, valor_pago, data_vencimento, data_pagamento, pago, observacao))
+
+        # Carregar os dados do Excel
+        df = contasDeCasa.carregarDadosExcel('controleFinanceiro.xlsx')
+
+        # Localizar a linha correta para atualização
+        df.loc[df['ID'] == id_selecionado, ['Nome Contas', 'Valor', 'Data Vencimento', 'Data Pagamento', 'Pago', 'Observacao']] = [
+            nome_conta, valor_pago, data_vencimento, data_pagamento, pago, observacao
+        ]
+
+        # Salvar as alterações no Excel
+        contasDeCasa.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
+
+        # Limpar os campos de entrada
+        self.limparCamposEdicao()
+
+    # Funcao para limpar os campos apos salvar os dados editados
+    def limparCamposEdicao(self):
+        self.entryNomeContaCasa.delete(0, 'end')
+        self.entryPagoContaCasa.delete(0, 'end')
+        self.entryDataVencimentoCasa.delete(0, 'end')
+        self.entryDataPagamentoCasa.delete(0, 'end')
+        self.entryObservacao.delete(0, 'end')
+        self.varPagoCasa.set('Não')
+
+    # Funcao para exclusao de dados da planilha
+    def excluirDados(self):
+        # Obter os IDs selecionados para exclusão
+        ids_exclusao = [self.treeview.item(item)['values'][0] for item in self.treeview.selection()]
+        contasDeCasa.excluirDados(ids_exclusao, 'controleFinanceiro.xlsx')
+        self.exibir_dados()  # Recarregar a visualização
+           
+
 # Classe da janela do modulo HorasTrabalho
 class JanelaHorasTrabalhada(customtkinter.CTkToplevel):
     
@@ -738,11 +724,12 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
     def atualizaCheckBoxCasa(self):
         self.varPagoCasa.set('Sim' if self.checkBoxPAgoContasCasa.get() else 'Não')
 
+    # Abre uma nova janela na Janela de Contas Casa para que possa ser realizado a edicao dos dados
     def abrirVisualizacao(self):
         # Configuração da janela
         self.janela_visualizacao = customtkinter.CTkToplevel(self)
         self.janela_visualizacao.geometry('600x600')
-        self.janela_visualizacao.title('Gunz System - Anotacao Contas - Edicao de Dados')
+        self.janela_visualizacao.title('Gunz System - Edicao de Dados')
         self.janela_visualizacao.after(200, lambda: self.janela_visualizacao.iconbitmap('assets/logoGrande-40x40.ico'))
 
         # Titulo da pagina
@@ -795,7 +782,7 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.botaoExibirDados.pack(pady=10)
 
         # Botao para editar os dados
-        self.botaoEditarDados = customtkinter.CTkButton(self.janela_visualizacao, text="Editar Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.editar_dados)
+        self.botaoEditarDados = customtkinter.CTkButton(self.janela_visualizacao, text="Editar Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.editarDados)
         self.botaoEditarDados.pack(pady=10)
 
         # Botao para salvar as alteracoes
@@ -803,7 +790,7 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.botaoSalvarAlteracoes.pack(pady=10)
 
         # Botao para excluir dados
-        self.botaoExcluirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Excluir Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.excluir_dados)
+        self.botaoExcluirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Excluir Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.excluirDados)
         self.botaoExcluirDados.pack(pady=10)
 
         # Botao para fechar a janela
@@ -814,170 +801,111 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
         self.parent.iconify()
 
+    # Funcao para chamar a classe onde os dados vao ser salvos    
     def salvarDados(self):
+        #Coletando os dados
         nomeContaDeCasa = self.entryNomeContaCasa.get()
         valorPago = self.entryPagoContaCasa.get()
         pago = self.varPagoCasa.get()
         observacoes = self.entryObservacao.get()
-        dataEmString = self.entryDataVencimentoCasa.get()
-        dataVencimento = datetime.strptime(dataEmString, '%d/%m/%Y')
-        dataEmString2 = self.entryDataPagamentoCasa.get()
-        dataPagamento = datetime.strptime(dataEmString2, '%d/%m/%Y')
+        dataVencimento = datetime.strptime(self.entryDataVencimentoCasa.get(), '%d/%m/%Y')
+        dataPagamento = datetime.strptime(self.entryDataPagamentoCasa.get(), '%d/%m/%Y')
         
-        nova_conta = contasDeCasa(nomeContaDeCasa, 
-                                  valorPago, 
-                                  dataVencimento, 
-                                  dataPagamento, 
-                                  pago, 
-                                  observacoes)
-        dados_novo = nova_conta.dicionarioDados()
-        
-        try:
-            # Carregar dados existentes do Excel
-            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
-            lista_contas_existentes = df.to_dict(orient='records')
-            
-            # Verificar se o novo dado já existe
-            ids_existentes = set(row['ID'] for row in lista_contas_existentes)
-            if dados_novo['ID'] in ids_existentes:
-                print("Registro já existe. Não adicionando.")
-                return
-            
-            # Adicionar novo registro
-            lista_contas_existentes.append(dados_novo)
-            
-            # Criar DataFrame e salvar
-            df = pd.DataFrame(lista_contas_existentes)
-            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
-            
-            print("Dados salvos com sucesso!")
-        except FileNotFoundError:
-            # Criar DataFrame com o novo registro se o arquivo não existir
-            df = pd.DataFrame([dados_novo])
-            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
-            print("Arquivo criado e dados salvos com sucesso!")
-
+        conta = contasDeCasa(nomeContaDeCasa, 
+                             valorPago, 
+                             dataVencimento, 
+                             dataPagamento, 
+                             pago, 
+                             observacoes)
+        contaCasa.append(conta)
+        contasDeCasa.atualizaExcel(contaCasa, 'controleFinanceiro.xlsx')
+        contaCasa.clear()
+       
+    # Funcao para realizar a exibicao de dados na nova janela       
     def exibir_dados(self):
-        # Limpa a tabela antes de carregar os dados
-        for item in self.treeview.get_children():
-            self.treeview.delete(item)
+        # Carregar os dados do Excel
+        df = contasDeCasa.carregarDadosExcel('controleFinanceiro.xlsx')
+        # Limpar o Treeview antes de adicionar novos dados
+        for row in self.treeview.get_children():
+            self.treeview.delete(row)
         
-        # Carrega os dados do arquivo Excel
-        try:
-            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
-            for index, row in df.iterrows():
-                # Use o ID da linha como iid
-                self.treeview.insert("", "end", iid=row['ID'], values=tuple(row))
-        except Exception as e:
-            messagebox.showerror('Erro', f"Erro ao carregar os dados: {e}")
-    
-    def editar_dados(self):
+        # Preencher o Treeview com os dados
+        for _, row in df.iterrows():
+            self.treeview.insert('', 'end', values=tuple(row))
+
+    # Funcao para realizar a edicao dos dados na nova janela
+    def editarDados(self):
+        # Obter os dados selecionados
         selected_item = self.treeview.selection()
-        if not selected_item:
-            messagebox.showwarning("Aviso", "Selecione um dado para editar.")
-            return
-
-        item_id = selected_item[0]  # Obtém o ID do item selecionado
-        item = self.treeview.item(item_id)
-        
-        if 'values' not in item:
-            messagebox.showwarning("Aviso", "Item selecionado não contém valores.")
-            return
-
-        valores = item['values']  # Obtém os valores do item selecionado
-
-        # Carrega os dados nos campos para edição
-        self.carregarDadosParaEditar(valores)
-
-        # Define o método de salvar para o botão de salvar alterações
-        self.botaoSalvarAlteracoes.configure(command=lambda: self.salvarDadosEditados(item_id))
-    
-    def carregarDadosParaEditar(self, valores):
-        # Carrega os dados nos campos para edição
-        self.entryNomeContaCasa.set(valores[2])
-        self.entryPagoContaCasa.set(valores[1])
-        self.varPagoCasa.set(valores[3])
-        self.entryObservacao.insert(0, valores[4])
-        self.entryDataVencimentoCasa.insert(0, valores[5])
-        self.entryDataPagamentoCasa.insert(0, valores[6])
-
-    def salvarDadosEditados(self, id_editar):
-
-        if not id_editar:
-            messagebox.showwarning("Aviso", "ID do item não encontrado.")
-            return
-
-        try:
-            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
-            df['ID'] = df['ID'].astype(str)  # Converta IDs no DataFrame para string
-            id_editar = str(id_editar)  # Converta o ID para string
-
-            print(df.head())  # Imprima as primeiras linhas do DataFrame para verificar
-
-            index = df[df['ID'] == id_editar].index
+        if selected_item:
+            item_data = self.treeview.item(selected_item)['values']
+            # Aqui você pode exibir os dados nos campos de entrada para edicao
+            self.entryNomeContaCasa.delete(0, 'end')
+            self.entryNomeContaCasa.insert(0, item_data[1])  # Nome Conta
+            self.entryPagoContaCasa.delete(0, 'end')
+            self.entryPagoContaCasa.insert(0, item_data[2])  # Valor
+            self.entryDataVencimentoCasa.delete(0, 'end')
+            self.entryDataVencimentoCasa.insert(0, item_data[3])  # Data Vencimento
+            self.entryDataPagamentoCasa.delete(0, 'end')
+            self.entryDataPagamentoCasa.insert(0, item_data[4])  # Data Pagamento
+            self.entryObservacao.delete(0, 'end')
+            self.entryObservacao.insert(0, item_data[6])  # Observacao
             
-            if index.empty:
-                messagebox.showwarning("Aviso", "ID do item não encontrado no DataFrame.")
-                return
+            # Usa o set em vez do delete/inset para varPagoCasa
+            self.varPagoCasa.set(item_data[5]) # Pago
 
-            # Atualiza o primeiro índice encontrado
-            index = index[0]
-
-            # Atualiza os valores
-            df.at[index, 'Nome Contas'] = self.entryNomeContaCasa.get()
-            df.at[index, 'Valor'] = int(self.entryPagoContaCasa.get())
-            df.at[index, 'Data Vencimento'] = self.entryDataVencimentoCasa.get()
-            df.at[index, 'Data Pagamento'] = self.entryDataPagamentoCasa.get()
-            df.at[index, 'Pago'] = float(self.varPagoCasa.get())
-            df.at[index, 'Observacao'] = self.entryObservacao.get()
-
-            # Salva as alterações
-            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
-            self.exibir_dados()  # Atualiza a tabela
-
-        except Exception as e:
-            messagebox.showerror('Error', f"Erro ao atualizar os dados: {e}")
-    
-    def excluir_dados(self):
+    # Funcao para salvar os dados editados na nova janela
+    def salvarDadosEditados(self):
+        # Captura os dados do formulário de edição
         selected_item = self.treeview.selection()
         if not selected_item:
-            messagebox.showwarning("Aviso", "Selecione um dado para excluir.")
+            messagebox.showwarning("Nenhum item selecionado")
             return
+        
+        # Obtém o ID do item selecionado
+        id_selecionado = self.treeview.item(selected_item)['values'][0]
 
-        item_id = selected_item[0]
-        if messagebox.askyesno("Confirmação", "Você realmente deseja excluir este item?"):
-            try:
-                df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Contas de Casa')
-                df = df[df['ID'] != item_id]  # Remove a linha com o ID selecionado
-                df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Contas de Casa')
-                self.exibir_dados()  # Atualiza a tabela
-                print("Dados excluídos com sucesso!")
-            except Exception as e:
-                messagebox.showerror('Erro', f"Erro ao excluir os dados: {e}")        
-        
-  
-    # # Função para chamar a classe onde os dados vão ser salvos    
-    # def salvarDados(self):
-    #     #Coletando os dados
-    #     nomeContaDeCasa = self.entryNomeContaCasa.get()
-    #     valorPago = self.entryPagoContaCasa.get()
-    #     pago = self.varPagoCasa.get()
-    #     observacoes = self.entryObservacao.get()
-    #     dataEmString = self.entryDataVencimentoCasa.get()
-    #     dataVencimento = datetime.strptime(dataEmString, '%d/%m/%Y')
-    #     dataEmString2 = self.entryDataPagamentoCasa.get()
-    #     dataPagamento = datetime.strptime(dataEmString2, '%d/%m/%Y')
-        
-    #     conta = contasDeCasa(nomeContaDeCasa, 
-    #                          valorPago, 
-    #                          dataVencimento, 
-    #                          dataPagamento, 
-    #                          pago, 
-    #                          observacoes)
-    #     contaCasa.append(conta)
-    #     contasDeCasa.atualizaExcel(contaCasa, 'controleFinanceiro.xlsx')
-    #     contaCasa.clear()
-               
+        # Coletar os dados atualizados do formulário
+        nome_conta = self.entryNomeContaCasa.get()
+        valor_pago = self.entryPagoContaCasa.get()
+        data_vencimento = self.entryDataVencimentoCasa.get()
+        data_pagamento = self.entryDataPagamentoCasa.get()
+        pago = self.varPagoCasa.get()
+        observacao = self.entryObservacao.get()
+
+        # Atualize o Treeview com os novos dados
+        self.treeview.item(selected_item, values=(id_selecionado, nome_conta, valor_pago, data_vencimento, data_pagamento, pago, observacao))
+
+        # Carregar os dados do Excel
+        df = contasDeCasa.carregarDadosExcel('controleFinanceiro.xlsx')
+
+        # Localizar a linha correta para atualização
+        df.loc[df['ID'] == id_selecionado, ['Nome Contas', 'Valor', 'Data Vencimento', 'Data Pagamento', 'Pago', 'Observacao']] = [
+            nome_conta, valor_pago, data_vencimento, data_pagamento, pago, observacao
+        ]
+
+        # Salvar as alterações no Excel
+        contasDeCasa.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
+
+        # Limpar os campos de entrada
+        self.limparCamposEdicao()
+
+    # Funcao para limpar os campos apos salvar os dados editados
+    def limparCamposEdicao(self):
+        self.entryNomeContaCasa.delete(0, 'end')
+        self.entryPagoContaCasa.delete(0, 'end')
+        self.entryDataVencimentoCasa.delete(0, 'end')
+        self.entryDataPagamentoCasa.delete(0, 'end')
+        self.entryObservacao.delete(0, 'end')
+        self.varPagoCasa.set('Não')
+
+    # Funcao para exclusao de dados da planilha
+    def excluirDados(self):
+        # Obter os IDs selecionados para exclusão
+        ids_exclusao = [self.treeview.item(item)['values'][0] for item in self.treeview.selection()]
+        contasDeCasa.excluirDados(ids_exclusao, 'controleFinanceiro.xlsx')
+        self.exibir_dados()  # Recarregar a visualização
+           
 # Classe da janela do modulo Faculdade
 class JanelaFaculdade(customtkinter.CTkToplevel):
     

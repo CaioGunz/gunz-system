@@ -19,8 +19,8 @@ class contasDeCasa:
             'ID': str(uuid.uuid4()),
             'Nome Contas': self.nomeContas,
             'Valor': self.valor,
-            'Data Vencimento': self.dataVencimento,
-            'Data Pagamento': self.dataPagamento,
+            'Data Vencimento': self.dataVencimento.strftime('%d/%m/%Y'),
+            'Data Pagamento': self.dataPagamento.strftime('%d/%m/%Y'),
             'Pago': self.pago,
             'Observacao': self.observacao
         }
@@ -69,13 +69,53 @@ class contasDeCasa:
                 if row[0] not in existing_entries: # Checa se o ID ja existe
                     worksheet.append(row)
             
-            # Formato para data
-            for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, min_col=3, max_col=4):
+            # Formatação das células de data
+            for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, min_col=4, max_col=5):
                 for cell in row:
-                    cell.number_format = 'dd/mm/yyyy'
+                    cell.number_format = 'DD/MM/YYYY'
             
             # Salva o arquivo
             workbook.save(nomeArquivo)
 
         except Exception as e:
             print(f"Erro ao atualizar o arquivo Excel: {e}")
+
+    @staticmethod
+    def carregarDadosExcel(nomeArquivo):
+        # Carregar dados existentes da aba "Contas de Casa" do Excel
+        try:
+            if os.path.exists(nomeArquivo):
+                df = pd.read_excel(nomeArquivo, sheet_name='Contas de Casa')
+                return df
+            else:
+                print(f"Arquivo {nomeArquivo} não encontrado.")
+                return pd.DataFrame()
+        except Exception as e:
+            print(f"Erro ao carregar os dados: {e}")
+            return pd.DataFrame()
+
+    @staticmethod
+    def salvarDadosEditados(df_editado, nomeArquivo):
+        # Atualizar a aba do Excel com os dados editados
+        try:
+            workbook = load_workbook(nomeArquivo)
+            worksheet = workbook['Contas de Casa']
+
+            # Limpar a aba atual e reinserir cabeçalhos
+            worksheet.delete_rows(2, worksheet.max_row)
+            headers = ['ID', 'Nome Contas', 'Valor', 'Data Vencimento', 'Data Pagamento', 'Pago', 'Observacao']
+            for row in dataframe_to_rows(df_editado, index=False, header=False):
+                worksheet.append(row)
+
+            workbook.save(nomeArquivo)
+        except Exception as e:
+            print(f"Erro ao salvar as alterações no Excel: {e}")
+
+    @staticmethod
+    def excluirDados(ids_exclusao, nomeArquivo):
+        try:
+            df = contasDeCasa.carregarDadosExcel(nomeArquivo)
+            df = df[~df['ID'].isin(ids_exclusao)]  # Excluir os IDs selecionados
+            contasDeCasa.salvarDadosEditados(df, nomeArquivo)
+        except Exception as e:
+            print(f"Erro ao excluir os dados: {e}")

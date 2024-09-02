@@ -24,7 +24,7 @@ class anotacaoContas:
             'Categoria Conta': self.categoria,
             'Descricao': self.descricaoProduto,
             'Valor': self.valor,
-            'Data Compra': self.dataCompra,
+            'Data Compra': self.dataCompra.strftime('%d/%m/%Y'),
             'Pago': self.pago,
             'Observacao': self.observacao
         }
@@ -85,3 +85,43 @@ class anotacaoContas:
 
         except Exception as e:
             print(f"Erro ao atualizar o arquivo Excel: {e}")
+            
+    @staticmethod
+    def carregarDadosExcel(nomeArquivo):
+        # Carregar dados existentes da aba "Anotacao Contas" do Excel
+        try:
+            if os.path.exists(nomeArquivo):
+                df = pd.read_excel(nomeArquivo, sheet_name='Anotacao Contas')
+                return df
+            else:
+                print(f"Arquivo {nomeArquivo} não encontrado.")
+                return pd.DataFrame()
+        except Exception as e:
+            print(f"Erro ao carregar os dados: {e}")
+            return pd.DataFrame()
+
+    @staticmethod
+    def salvarDadosEditados(df_editado, nomeArquivo):
+        # Atualizar a aba do Excel com os dados editados
+        try:
+            workbook = load_workbook(nomeArquivo)
+            worksheet = workbook['Anotacao Contas']
+
+            # Limpar a aba atual e reinserir cabeçalhos
+            worksheet.delete_rows(2, worksheet.max_row)
+            headers = ['ID', 'mes', 'ano', 'categoria', 'descricaoProduto', 'valor', 'dataCompra', 'pago', 'observacao']
+            for row in dataframe_to_rows(df_editado, index=False, header=False):
+                worksheet.append(row)
+
+            workbook.save(nomeArquivo)
+        except Exception as e:
+            print(f"Erro ao salvar as alterações no Excel: {e}")
+
+    @staticmethod
+    def excluirDados(ids_exclusao, nomeArquivo):
+        try:
+            df = anotacaoContas.carregarDadosExcel(nomeArquivo)
+            df = df[~df['ID'].isin(ids_exclusao)]  # Excluir os IDs selecionados
+            anotacaoContas.salvarDadosEditados(df, nomeArquivo)
+        except Exception as e:
+            print(f"Erro ao excluir os dados: {e}")
