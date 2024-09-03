@@ -297,7 +297,7 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         self.botaoExibirDados.pack(pady=10)
 
         # Botao para editar os dados
-        self.botaoEditarDados = customtkinter.CTkButton(self.janela_visualizacao, text="Editar Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.editar_dados)
+        self.botaoEditarDados = customtkinter.CTkButton(self.janela_visualizacao, text="Editar Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.editarDados)
         self.botaoEditarDados.pack(pady=10)
 
         # Botao para salvar as alteracoes
@@ -305,7 +305,7 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         self.botaoSalvarAlteracoes.pack(pady=10)
 
         # Botao para excluir dados
-        self.botaoExcluirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Excluir Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.excluir_dados)
+        self.botaoExcluirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Excluir Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.excluirDados)
         self.botaoExcluirDados.pack(pady=10)
 
         # Botao para fechar a janela
@@ -320,37 +320,43 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         self.varPago.set('Sim' if self.checkBoxPagoContas.get() else 'Não')
 
     def salvarDados(self):
-        ano = self.comboBoxAnoAnotacao.get()
+        ano = int(self.comboBoxAnoAnotacao.get())
         mes = self.comboBoxMesAnotacao.get()
         categoria = self.comboBoxCategoria.get()
         descricao = self.entryDescricaoConta.get()
-        valor = self.entryValorConta.get()
-        data = self.entryDataConta.get()
+        valor = float(self.entryValorConta.get())
+        data = datetime.strptime(self.entryDataConta.get(), '%d/%m/%Y')
         pago = self.varPago.get()
         observacao = self.entryObeservacaoConta.get()
         
         nova_conta = anotacaoContas(mes, ano, categoria, descricao, valor, data, pago, observacao)
         dados_novo = nova_conta.dicionarioDados()
-        
+
         try:
-            # Carregar dados existentes do Excel
-            df = pd.read_excel('controleFinanceiro.xlsx', sheet_name='Anotacao Contas')
-            lista_contas_existentes = df.to_dict(orient='records')
-            
-            # Verificar se o novo dado já existe
-            ids_existentes = set(row['ID'] for row in lista_contas_existentes)
-            if dados_novo['ID'] in ids_existentes:
-                print("Registro já existe. Não adicionando.")
-                return
-            
-            # Adicionar novo registro
-            lista_contas_existentes.append(dados_novo)
-            
-            # Criar DataFrame e salvar
-            df = pd.DataFrame(lista_contas_existentes)
-            df.to_excel('controleFinanceiro.xlsx', index=False, sheet_name='Anotacao Contas')
-            
-            print("Dados salvos com sucesso!")
+            # Verificar se o arquivo existe
+            with pd.ExcelFile('controleFinanceiro.xlsx') as reader:
+                if 'Anotacao Contas' in reader.sheet_names:
+                    # Carregar dados existentes do Excel
+                    df = pd.read_excel(reader, sheet_name='Anotacao Contas')
+                    lista_contas_existentes = df.to_dict(orient='records')
+                else:
+                    lista_contas_existentes = []
+                
+                # Verificar se o novo dado já existe
+                ids_existentes = set(row['ID'] for row in lista_contas_existentes)
+                if dados_novo['ID'] in ids_existentes:
+                    print("Registro já existe. Não adicionando.")
+                    return
+
+                # Adicionar novo registro
+                lista_contas_existentes.append(dados_novo)
+                
+                # Criar DataFrame e salvar
+                df = pd.DataFrame(lista_contas_existentes)
+                with pd.ExcelWriter('controleFinanceiro.xlsx', engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+                    df.to_excel(writer, index=False, sheet_name='Anotacao Contas')
+
+                print("Dados salvos com sucesso!")
         except FileNotFoundError:
             # Criar DataFrame com o novo registro se o arquivo não existir
             df = pd.DataFrame([dados_novo])
@@ -360,7 +366,7 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
     # Funcao para realizar a exibicao de dados na nova janela       
     def exibir_dados(self):
         # Carregar os dados do Excel
-        df = contasDeCasa.carregarDadosExcel('controleFinanceiro.xlsx')
+        df = anotacaoContas.carregarDadosExcel('controleFinanceiro.xlsx')
         # Limpar o Treeview antes de adicionar novos dados
         for row in self.treeview.get_children():
             self.treeview.delete(row)
@@ -375,20 +381,24 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         selected_item = self.treeview.selection()
         if selected_item:
             item_data = self.treeview.item(selected_item)['values']
-            # Aqui você pode exibir os dados nos campos de entrada para edicao
-            self.entryNomeContaCasa.delete(0, 'end')
-            self.entryNomeContaCasa.insert(0, item_data[1])  # Nome Conta
-            self.entryPagoContaCasa.delete(0, 'end')
-            self.entryPagoContaCasa.insert(0, item_data[2])  # Valor
-            self.entryDataVencimentoCasa.delete(0, 'end')
-            self.entryDataVencimentoCasa.insert(0, item_data[3])  # Data Vencimento
-            self.entryDataPagamentoCasa.delete(0, 'end')
-            self.entryDataPagamentoCasa.insert(0, item_data[4])  # Data Pagamento
-            self.entryObservacao.delete(0, 'end')
-            self.entryObservacao.insert(0, item_data[6])  # Observacao
+            
+            # Atualizando os campos de edicao com set() nos comboBoxs
+            self.comboBoxAnoAnotacao.set(item_data[1])  # Ano
+            self.comboBoxMesAnotacao.set(item_data[2])  # Mes
+            self.comboBoxCategoria.set(item_data[3])  # Categoria
+            
+            # Atualizando os valores que sao tipo entry
+            self.entryDescricaoConta.delete(0, 'end')
+            self.entryDescricaoConta.insert(0, item_data[4])  # Descricao
+            self.entryValorConta.delete(0, 'end')
+            self.entryValorConta.insert(0, item_data[6])  # Valor
+            self.entryDataConta.delete(0, 'end')
+            self.entryDataConta.insert(0, item_data[7])  # Data
+            self.entryObeservacaoConta.delete(0, 'end')
+            self.entryObeservacaoConta.insert(0, item_data[8])  # Observacao
             
             # Usa o set em vez do delete/inset para varPagoCasa
-            self.varPagoCasa.set(item_data[5]) # Pago
+            self.varPago.set(item_data[5]) # Pago
 
     # Funcao para salvar os dados editados na nova janela
     def salvarDadosEditados(self):
@@ -402,44 +412,48 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         id_selecionado = self.treeview.item(selected_item)['values'][0]
 
         # Coletar os dados atualizados do formulário
-        nome_conta = self.entryNomeContaCasa.get()
-        valor_pago = self.entryPagoContaCasa.get()
-        data_vencimento = self.entryDataVencimentoCasa.get()
-        data_pagamento = self.entryDataPagamentoCasa.get()
-        pago = self.varPagoCasa.get()
-        observacao = self.entryObservacao.get()
+        ano = self.comboBoxAnoAnotacao.get()
+        mes = self.comboBoxMesAnotacao.get()
+        categoria = self.comboBoxCategoria.get()
+        descricao = self.entryDescricaoConta.get()
+        valor = self.entryValorConta.get()
+        data = self.entryDataConta.get()
+        pago = self.varPago.get()
+        observacao = self.entryObeservacaoConta.get()
 
         # Atualize o Treeview com os novos dados
-        self.treeview.item(selected_item, values=(id_selecionado, nome_conta, valor_pago, data_vencimento, data_pagamento, pago, observacao))
+        self.treeview.item(selected_item, values=(id_selecionado, mes, ano, categoria, descricao, valor, data, pago, observacao))
 
         # Carregar os dados do Excel
-        df = contasDeCasa.carregarDadosExcel('controleFinanceiro.xlsx')
+        df = anotacaoContas.carregarDadosExcel('controleFinanceiro.xlsx')
 
         # Localizar a linha correta para atualização
-        df.loc[df['ID'] == id_selecionado, ['Nome Contas', 'Valor', 'Data Vencimento', 'Data Pagamento', 'Pago', 'Observacao']] = [
-            nome_conta, valor_pago, data_vencimento, data_pagamento, pago, observacao
+        df.loc[df['ID'] == id_selecionado, ['Mes', 'Ano', 'Categoria', 'Descricao', 'Valor', 'Data Compra', 'Pago', 'Observacao']] = [
+            mes, ano, categoria, descricao, valor, data, pago, observacao
         ]
 
         # Salvar as alterações no Excel
-        contasDeCasa.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
+        anotacaoContas.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
 
         # Limpar os campos de entrada
         self.limparCamposEdicao()
 
     # Funcao para limpar os campos apos salvar os dados editados
     def limparCamposEdicao(self):
-        self.entryNomeContaCasa.delete(0, 'end')
-        self.entryPagoContaCasa.delete(0, 'end')
-        self.entryDataVencimentoCasa.delete(0, 'end')
-        self.entryDataPagamentoCasa.delete(0, 'end')
-        self.entryObservacao.delete(0, 'end')
-        self.varPagoCasa.set('Não')
+        self.comboBoxAnoAnotacao.set('Selecione o ano')
+        self.comboBoxMesAnotacao.set('Selecione o mês')
+        self.comboBoxCategoria.set('Selecione a categoria')
+        self.entryDescricaoConta.delete(0, 'end')
+        self.entryValorConta.delete(0, 'end')
+        self.entryDataConta.delete(0, 'end')
+        self.entryObeservacaoConta.delete(0, 'end')
+        self.varPago.set('Não')
 
     # Funcao para exclusao de dados da planilha
     def excluirDados(self):
         # Obter os IDs selecionados para exclusão
         ids_exclusao = [self.treeview.item(item)['values'][0] for item in self.treeview.selection()]
-        contasDeCasa.excluirDados(ids_exclusao, 'controleFinanceiro.xlsx')
+        anotacaoContas.excluirDados(ids_exclusao, 'controleFinanceiro.xlsx')
         self.exibir_dados()  # Recarregar a visualização
            
 

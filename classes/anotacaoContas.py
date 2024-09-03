@@ -18,15 +18,15 @@ class anotacaoContas:
 
     def dicionarioDados(self):
         return {
-            "ID": str(uuid.uuid4()), # Gera um ID unico para cada registro de dados
+            "ID": str(uuid.uuid4()),  # Gera um ID único para cada registro de dados
             "Mes": self.mes,
-            "Ano": self.ano,
-            'Categoria Conta': self.categoria,
-            'Descricao': self.descricaoProduto,
-            'Valor': self.valor,
-            'Data Compra': self.dataCompra.strftime('%d/%m/%Y'),
-            'Pago': self.pago,
-            'Observacao': self.observacao
+            "Ano": int(self.ano),
+            "Categoria": self.categoria,
+            "Descricao": self.descricaoProduto,
+            "Valor": float(self.valor),
+            "Data Compra": self.dataCompra.strftime('%d/%m/%Y'),  # Convertendo para string no formato desejado
+            "Pago": self.pago,
+            "Observacao": self.observacao
         }
     
     @staticmethod
@@ -47,6 +47,7 @@ class anotacaoContas:
             
             sheet_name = 'Anotacao Contas'
             if sheet_name not in workbook.sheetnames:
+                print(f'Aba {sheet_name} nao encontrada, criando uma nova')
                 worksheet = workbook.create_sheet(sheet_name)
                 # Escreve os cabeçalhos
                 headers = ['ID', 
@@ -78,7 +79,7 @@ class anotacaoContas:
             # Formato para data
             for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, min_col=7, max_col=7):
                 for cell in row:
-                    cell.number_format = 'dd/mm/yyyy'
+                    cell.number_format = 'DD/MM/YYYY'
             
             # Salva o arquivo
             workbook.save(nomeArquivo)
@@ -91,14 +92,37 @@ class anotacaoContas:
         # Carregar dados existentes da aba "Anotacao Contas" do Excel
         try:
             if os.path.exists(nomeArquivo):
-                df = pd.read_excel(nomeArquivo, sheet_name='Anotacao Contas')
-                return df
+                xls = pd.ExcelFile(nomeArquivo)
+                if 'Anotacao Contas' in xls.sheet_names:
+                    df = pd.read_excel(nomeArquivo, sheet_name='Anotacao Contas')
+                    return df
+                else:
+                    print(f"Aba 'Anotacao Contas' não encontrada. Criando nova aba.")
+                    # Cria uma aba vazia e retorna um DataFrame vazio
+                    anotacaoContas.atualizaExcel([], nomeArquivo)  # Cria a aba se não existir
+                    return pd.DataFrame()  # Retorna DataFrame vazio
             else:
                 print(f"Arquivo {nomeArquivo} não encontrado.")
                 return pd.DataFrame()
         except Exception as e:
             print(f"Erro ao carregar os dados: {e}")
             return pd.DataFrame()
+
+
+
+
+    # def carregarDadosExcel(nomeArquivo):
+    #     # Carregar dados existentes da aba "Anotacao Contas" do Excel
+    #     try:
+    #         if os.path.exists(nomeArquivo):
+    #             df = pd.read_excel(nomeArquivo, sheet_name='Anotacao Contas')
+    #             return df
+    #         else:
+    #             print(f"Arquivo {nomeArquivo} não encontrado.")
+    #             return pd.DataFrame()
+    #     except Exception as e:
+    #         print(f"Erro ao carregar os dados: {e}")
+    #         return pd.DataFrame()
 
     @staticmethod
     def salvarDadosEditados(df_editado, nomeArquivo):
