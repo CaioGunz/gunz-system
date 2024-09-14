@@ -108,22 +108,6 @@ class anotacaoContas:
             print(f"Erro ao carregar os dados: {e}")
             return pd.DataFrame()
 
-
-
-
-    # def carregarDadosExcel(nomeArquivo):
-    #     # Carregar dados existentes da aba "Anotacao Contas" do Excel
-    #     try:
-    #         if os.path.exists(nomeArquivo):
-    #             df = pd.read_excel(nomeArquivo, sheet_name='Anotacao Contas')
-    #             return df
-    #         else:
-    #             print(f"Arquivo {nomeArquivo} não encontrado.")
-    #             return pd.DataFrame()
-    #     except Exception as e:
-    #         print(f"Erro ao carregar os dados: {e}")
-    #         return pd.DataFrame()
-
     @staticmethod
     def salvarDadosEditados(df_editado, nomeArquivo):
         # Atualizar a aba do Excel com os dados editados

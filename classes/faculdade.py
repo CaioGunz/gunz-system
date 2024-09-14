@@ -54,7 +54,7 @@ class Faculdade:
                 worksheet = workbook.create_sheet(sheet_name)
                 # Escreve os cabeçalhos
                 headers = ['ID', 
-                           'Nome Matéria', 
+                           'Nome Materia', 
                            'Nota Atividade 1', 
                            'Nota Atividade 2', 
                            'Nota Atividade 3', 
@@ -94,7 +94,7 @@ class Faculdade:
 
     @staticmethod
     def carregarDadosExcel(nomeArquivo):
-        # Carregar dados existentes da aba "Contas de Casa" do Excel
+        # Carregar dados existentes da aba "Faculdade" do Excel
         try:
             if os.path.exists(nomeArquivo):
                 df = pd.read_excel(nomeArquivo, sheet_name='Faculdade')
@@ -115,7 +115,7 @@ class Faculdade:
 
             # Limpar a aba atual e reinserir cabeçalhos
             worksheet.delete_rows(2, worksheet.max_row)
-            headers = ['ID', 'Nome Matéria', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota MAPA', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']
+            headers = ['ID', 'Nome Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota MAPA', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']
             for row in dataframe_to_rows(df_editado, index=False, header=False):
                 worksheet.append(row)
 

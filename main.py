@@ -1238,8 +1238,8 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         df = Faculdade.carregarDadosExcel('controleFinanceiro.xlsx')
 
         # Localizar a linha correta para atualização
-        df.loc[df['ID'] == id_selecionado, ['Nome Matéria', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota MAPA', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']] = [
-            nomeMateria, float(atvd1), float(atvd2), float(atvd3), float(atvd4), float(mapa), float(sgc), float(valorMensalidade), dataMensalidade, pago
+        df.loc[df['ID'] == id_selecionado, ['Nome Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota MAPA', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']] = [
+            nomeMateria, atvd1, atvd2, atvd3, atvd4, mapa, sgc, valorMensalidade, dataMensalidade, pago
         ]
 
         # Salvar as alterações no Excel
@@ -1267,10 +1267,7 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         ids_exclusao = [self.treeview.item(item)['values'][0] for item in self.treeview.selection()]
         Faculdade.excluirDados(ids_exclusao, 'controleFinanceiro.xlsx')
         self.exibir_dados()  # Recarregar a visualização
-
-    # Funcao para salvar os dados editados na nova janela
-    # def salvarDadosEditados(self):
-           
+    
 # Classe onde estão os botoes para todos os modulos
 class Janelas(customtkinter.CTk):
     
