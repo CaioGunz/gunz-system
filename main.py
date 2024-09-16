@@ -439,6 +439,8 @@ class JanelaAnotacaoContas(customtkinter.CTkToplevel):
         # Salvar as alterações no Excel
         anotacaoContas.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
 
+        messagebox.showinfo('Salvo', 'Alteração salva com sucesso!!')
+        
         # Limpar os campos de entrada
         self.limparCamposEdicao()
 
@@ -904,6 +906,8 @@ class JanelaContasDeCasa(customtkinter.CTkToplevel):
         # Salvar as alterações no Excel
         contasDeCasa.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
 
+        messagebox.showinfo('Salvo', 'Alteração salva com sucesso!!')
+        
         # Limpar os campos de entrada
         self.limparCamposEdicao()
 
@@ -1125,8 +1129,8 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         atvd2 = float(self.entryAtividade2.get())
         atvd3 = float(self.entryAtividade3.get())
         atvd4 = float(self.entryAtividade4.get())
-        mapa = self.entryMapa.get()
-        sgc = self.entrySGC.get()
+        mapa = float(self.entryMapa.get())
+        sgc = float(self.entrySGC.get())
         valorMensalidade = float(self.entryValorMensalidade.get())
         dataMensalidade = self.entryDataMensalidade.get()
         pago = self.varPago.get()
@@ -1221,13 +1225,13 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
 
         # Coletar os dados atualizados do formulário
         nomeMateria = self.entryNomeMateria.get()
-        atvd1 = self.entryAtividade1.get()
-        atvd2 = self.entryAtividade2.get()
-        atvd3 = self.entryAtividade3.get()
-        atvd4 = self.entryAtividade4.get()
-        mapa = self.entryMapa.get()
-        sgc = self.entrySGC.get()
-        valorMensalidade = self.entryValorMensalidade.get()
+        atvd1 = float(self.entryAtividade1.get())
+        atvd2 = float(self.entryAtividade2.get())
+        atvd3 = float(self.entryAtividade3.get())
+        atvd4 = float(self.entryAtividade4.get())
+        mapa = float(self.entryMapa.get())
+        sgc = float(self.entrySGC.get())
+        valorMensalidade = float(self.entryValorMensalidade.get())
         dataMensalidade = self.entryDataMensalidade.get()
         pago = self.varPago.get()
 
@@ -1238,12 +1242,14 @@ class JanelaFaculdade(customtkinter.CTkToplevel):
         df = Faculdade.carregarDadosExcel('controleFinanceiro.xlsx')
 
         # Localizar a linha correta para atualização
-        df.loc[df['ID'] == id_selecionado, ['Nome Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota MAPA', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']] = [
+        df.loc[df['ID'] == id_selecionado, ['Nome Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota Mapa', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']] = [
             nomeMateria, atvd1, atvd2, atvd3, atvd4, mapa, sgc, valorMensalidade, dataMensalidade, pago
         ]
 
         # Salvar as alterações no Excel
         Faculdade.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
+        
+        messagebox.showinfo('Salvo', 'Alteração salva com sucesso!!')
 
         # Limpar os campos de entrada
         self.limparCamposEdicao()

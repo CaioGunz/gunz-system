@@ -59,7 +59,7 @@ class Faculdade:
                            'Nota Atividade 2', 
                            'Nota Atividade 3', 
                            'Nota Atividade 4', 
-                           'Nota MAPA', 
+                           'Nota Mapa', 
                            'Nota SGC', 
                            'Valor Mensalidade', 
                            'Data Mensalidade', 
