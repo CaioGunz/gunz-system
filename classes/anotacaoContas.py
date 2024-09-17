@@ -117,7 +117,15 @@ class anotacaoContas:
 
             # Limpar a aba atual e reinserir cabeçalhos
             worksheet.delete_rows(2, worksheet.max_row)
-            headers = ['ID', 'mes', 'ano', 'categoria', 'descricaoProduto', 'valor', 'dataCompra', 'pago', 'observacao']
+            headers = ['ID', 
+                       'mes', 
+                       'ano', 
+                       'categoria', 
+                       'descricaoProduto', 
+                       'valor', 
+                       'dataCompra', 
+                       'pago', 
+                       'observacao']
             for row in dataframe_to_rows(df_editado, index=False, header=False):
                 worksheet.append(row)
 

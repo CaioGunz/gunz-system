@@ -58,7 +58,18 @@ class horasTrabalhadas:
             if sheet_name not in workbook.sheetnames:
                 worksheet = workbook.create_sheet(sheet_name)
                 # Escreve os cabeçalhos
-                headers = ['Mes', 'Ano', 'Data Trabalho', 'Carga Horaria', 'Hora Entrada', 'Hora Saida Almoco', 'Hora Entrada Almoco', 'Hora Saida', 'Horas Extra Calculadas', 'Observacoes', 'Quantidade de Horas Almoco', 'Horas Trabalhadas']
+                headers = ['Mes', 
+                           'Ano', 
+                           'Data Trabalho', 
+                           'Carga Horaria', 
+                           'Hora Entrada', 
+                           'Hora Saida Almoco', 
+                           'Hora Entrada Almoco', 
+                           'Hora Saida', 
+                           'Horas Extra Calculadas', 
+                           'Observacoes', 
+                           'Quantidade de Horas Almoco', 
+                           'Horas Trabalhadas']
                 worksheet.append(headers)
             else:
                 worksheet = workbook[sheet_name]

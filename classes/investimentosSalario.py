@@ -36,7 +36,11 @@ class InvestimentosSalario:
             if sheet_name not in workbook.sheetnames:
                 worksheet = workbook.create_sheet(sheet_name)
                 # Escreve os cabeçalhos
-                headers = ['ID', 'Mes', 'Ano', 'Tipo Investimento', 'Valor']
+                headers = ['ID', 
+                           'Mes', 
+                           'Ano', 
+                           'Tipo Investimento', 
+                           'Valor']
                 worksheet.append(headers)
             else:
                 worksheet = workbook[sheet_name]
@@ -88,7 +92,12 @@ class InvestimentosSalario:
 
             # Limpar a aba atual e reinserir cabeçalhos
             worksheet.delete_rows(2, worksheet.max_row)
-            headers = ['ID', 'Mes', 'Ano', 'Tipo Investimento', 'Valor']
+            headers = ['ID', 
+                       'Mes', 
+                       'Ano', 
+                       'Tipo Investimento', 
+                       'Valor']
+            
             for row in dataframe_to_rows(df_editado, index=False, header=False):
                 worksheet.append(row)
 

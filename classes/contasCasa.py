@@ -103,7 +103,13 @@ class contasDeCasa:
 
             # Limpar a aba atual e reinserir cabeçalhos
             worksheet.delete_rows(2, worksheet.max_row)
-            headers = ['ID', 'Nome Contas', 'Valor', 'Data Vencimento', 'Data Pagamento', 'Pago', 'Observacao']
+            headers = ['ID', 
+                       'Nome Contas', 
+                       'Valor', 
+                       'Data Vencimento', 
+                       'Data Pagamento', 
+                       'Pago', 
+                       'Observacao']
             for row in dataframe_to_rows(df_editado, index=False, header=False):
                 worksheet.append(row)
 

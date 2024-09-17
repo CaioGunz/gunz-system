@@ -115,7 +115,17 @@ class Faculdade:
 
             # Limpar a aba atual e reinserir cabeçalhos
             worksheet.delete_rows(2, worksheet.max_row)
-            headers = ['ID', 'Nome Materia', 'Nota Atividade 1', 'Nota Atividade 2', 'Nota Atividade 3', 'Nota Atividade 4', 'Nota MAPA', 'Nota SGC', 'Valor Mensalidade', 'Data Mensalidade', 'Pago']
+            headers = ['ID', 
+                       'Nome Materia', 
+                       'Nota Atividade 1', 
+                       'Nota Atividade 2', 
+                       'Nota Atividade 3', 
+                       'Nota Atividade 4', 
+                       'Nota MAPA', 
+                       'Nota SGC', 
+                       'Valor Mensalidade', 
+                       'Data Mensalidade', 
+                       'Pago']
             for row in dataframe_to_rows(df_editado, index=False, header=False):
                 worksheet.append(row)
 
