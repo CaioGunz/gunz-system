@@ -631,15 +631,19 @@ class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
         
         # Instancia do  botao de salar dados
         self.botaoSalvarDados = botaoSalvaDados(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
-        self.botaoSalvarDados.place(relx=0.10, rely=0.65)
+        self.botaoSalvarDados.place(relx=0.10, rely=0.57)
         
         # Instancia do botao limpar dados
         self.botaoLimpaDados = botaoLimparCampos(self, font=('Montserrat', 14), fg_color='#054648', hover_color='#003638')
-        self.botaoLimpaDados.place(relx=0.60, rely=0.65)        
+        self.botaoLimpaDados.place(relx=0.60, rely=0.57)        
+        
+        # Botão para abrir nova janela
+        self.botaoAbrirJanela = customtkinter.CTkButton(self, text="Abrir Edição de Dados", command=self.abrirVisualizacao, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
+        self.botaoAbrirJanela.place(relx=0.5, rely=0.75, anchor='center')
         
         # Chama a classe que gera o botao para voltar a pagina inicial
         self.botaoPaginaInicial = BotaoVoltarInicial(self, janelaInicial, font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', width=400)
-        self.botaoPaginaInicial.place(relx=0.5, rely=0.85, anchor='center')
+        self.botaoPaginaInicial.place(relx=0.5, rely=0.90, anchor='center')
         
         # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
         self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
@@ -649,7 +653,7 @@ class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
     def salvarDados(self):
         # Coletando os dados
         mes = self.comboBoxMesInvestimento.get()
-        ano = self.comboBoxMesInvestimento.get()
+        ano = self.comboBoxAnoInvestimento.get()
         tipoInvestimento = self.comboBoxTipoInvestimento.get()
         valor = self.entryValorInvestido.get()
 
@@ -661,6 +665,154 @@ class JanelaInvestimentoSalario(customtkinter.CTkToplevel):
         InvestimentosSalario.atualizaExcel(investimentos, 'controleFinanceiro.xlsx')
         investimentos.clear()
     
+        # Abre uma nova janela na Janela de Contas Casa para que possa ser realizado a edicao dos dados
+    
+    # Funcao da pagina para as alteracoes nos dados
+    def abrirVisualizacao(self):
+        # Configuração da janela
+        self.janela_visualizacao = customtkinter.CTkToplevel(self)
+        self.janela_visualizacao.geometry('600x600')
+        self.janela_visualizacao.title('Gunz System - Edicao de Dados')
+        self.janela_visualizacao.after(200, lambda: self.janela_visualizacao.iconbitmap('assets/logoGrande-40x40.ico'))
+
+        # Titulo da pagina
+        self.tituloNovaJanela = customtkinter.CTkLabel(self.janela_visualizacao, text='Edição de Dados', font=('Montserrat', 18))
+        self.tituloNovaJanela.pack(pady=20)
+
+        # Janela de visualizacao dos dados
+        frame_treeview = customtkinter.CTkFrame(self.janela_visualizacao)
+        frame_treeview.pack(padx=20, pady=10, fill="both", expand=True)
+
+        scrollbar_y = Scrollbar(frame_treeview, orient="vertical")
+        scrollbar_y.pack(side="right", fill="y")
+
+        scrollbar_x = Scrollbar(frame_treeview, orient="horizontal")
+        scrollbar_x.pack(side="bottom", fill="x")
+
+        # Configuracao das colunas
+        self.treeview = ttk.Treeview(frame_treeview, columns=("ID", 
+                                                              "Mes", 
+                                                              "Ano", 
+                                                              "Tipo Investimento", 
+                                                              "Valor"), show="headings", yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+        self.treeview.pack(fill="both", expand=True)
+        
+        scrollbar_y.config(command=self.treeview.yview)
+        scrollbar_x.config(command=self.treeview.xview)
+
+        # Configuracao do nome das colunas
+        self.treeview.heading("ID", text="ID")
+        self.treeview.heading("Mes", text="Mes")
+        self.treeview.heading("Ano", text="Ano")
+        self.treeview.heading("Tipo Investimento", text="Tipo Investimento")
+        self.treeview.heading("Valor", text="Valor")
+
+        # Configuracao do tamanho das colunas
+        self.treeview.column("ID", width=50)
+        self.treeview.column("Mes", width=100)
+        self.treeview.column("Ano", width=100)
+        self.treeview.column("Tipo Investimento", width=150)
+        self.treeview.column("Valor", width=150)
+
+        # Botao para exibir os dados
+        self.botaoExibirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Exibir Dados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.exibir_dados)
+        self.botaoExibirDados.pack(pady=10)
+
+        # Botao para editar os dados
+        self.botaoEditarDados = customtkinter.CTkButton(self.janela_visualizacao, text="Editar Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.editarDados)
+        self.botaoEditarDados.pack(pady=10)
+
+        # Botao para salvar as alteracoes
+        self.botaoSalvarAlteracoes = customtkinter.CTkButton(self.janela_visualizacao, text="Salvar Alterações", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.salvarDadosEditados)
+        self.botaoSalvarAlteracoes.pack(pady=10)
+
+        # Botao para excluir dados
+        self.botaoExcluirDados = customtkinter.CTkButton(self.janela_visualizacao, text="Excluir Dados Selecionados", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.excluirDados)
+        self.botaoExcluirDados.pack(pady=10)
+
+        # Botao para fechar a janela
+        self.botaoFecharJanela = customtkinter.CTkButton(self.janela_visualizacao, text="Fechar", font=('Montserrat', 14, 'bold'), fg_color='#054648', hover_color='#003638', command=self.janela_visualizacao.destroy)
+        self.botaoFecharJanela.pack(pady=20)
+        
+        # Chama a funcao universal para perguntar ao usuario se ele realmente deseja fechar o sistema
+        self.protocol('WM_DELETE_WINDOW', lambda: fechajanelasSecundarias(self, self.parent))
+        self.parent.iconify()
+       
+    # Funcao para realizar a exibicao de dados na nova janela       
+    def exibir_dados(self):
+        # Carregar os dados do Excel
+        df = InvestimentosSalario.carregarDadosExcel('controleFinanceiro.xlsx')
+        # Limpar o Treeview antes de adicionar novos dados
+        for row in self.treeview.get_children():
+            self.treeview.delete(row)
+        
+        # Preencher o Treeview com os dados
+        for _, row in df.iterrows():
+            self.treeview.insert('', 'end', values=tuple(row))
+
+    # Funcao para realizar a edicao dos dados na nova janela
+    def editarDados(self):
+        # Obter os dados selecionados
+        selected_item = self.treeview.selection()
+        if selected_item:
+            item_data = self.treeview.item(selected_item)['values']
+            # Aqui você pode exibir os dados nos campos de entrada para edicao
+            self.comboBoxMesInvestimento.set(item_data[1])  # Mes
+            self.comboBoxAnoInvestimento.set(item_data[2])  # Ano
+            self.comboBoxTipoInvestimento.set(item_data[3]) # Tipo Investimento
+            self.entryValorInvestido.delete(0, 'end')
+            self.entryValorInvestido.insert(0, item_data[4])  # Valor Investido
+
+    # Funcao para salvar os dados editados na nova janela
+    def salvarDadosEditados(self):
+        # Captura os dados do formulário de edição
+        selected_item = self.treeview.selection()
+        if not selected_item:
+            messagebox.showwarning("Nenhum item selecionado")
+            return
+        
+        # Obtém o ID do item selecionado
+        id_selecionado = self.treeview.item(selected_item)['values'][0]
+
+        # Coletar os dados atualizados do formulário
+        ano = self.comboBoxAnoInvestimento.get()
+        mes = self.comboBoxMesInvestimento.get()
+        tipoInvestimento = self.comboBoxTipoInvestimento.get()
+        valor = self.entryValorInvestido.get()
+
+        # Atualize o Treeview com os novos dados
+        self.treeview.item(selected_item, values=(id_selecionado, ano, mes, tipoInvestimento, valor))
+
+        # Carregar os dados do Excel
+        df = InvestimentosSalario.carregarDadosExcel('controleFinanceiro.xlsx')
+
+        # Localizar a linha correta para atualização
+        df.loc[df['ID'] == id_selecionado, ['Mes', 'Ano', 'Tipo Investimento', 'Valor']] = [
+            mes, ano, tipoInvestimento, valor
+        ]
+
+        # Salvar as alterações no Excel
+        InvestimentosSalario.salvarDadosEditados(df, 'controleFinanceiro.xlsx')
+
+        messagebox.showinfo('Salvo', 'Alteração salva com sucesso!!')
+        
+        # Limpar os campos de entrada
+        self.limparCamposEdicao()
+
+    # Funcao para limpar os campos apos salvar os dados editados
+    def limparCamposEdicao(self):
+        self.comboBoxAnoInvestimento.set('Selecione o ano')
+        self.comboBoxMesInvestimento.set('Selecione o mês')
+        self.comboBoxTipoInvestimento.set('Selecione o tipo de investimento')
+        self.entryValorInvestido.delete(0, 'end')
+
+    # Funcao para exclusao de dados da planilha
+    def excluirDados(self):
+        # Obter os IDs selecionados para exclusão
+        ids_exclusao = [self.treeview.item(item)['values'][0] for item in self.treeview.selection()]
+        InvestimentosSalario.excluirDados(ids_exclusao, 'controleFinanceiro.xlsx')
+        self.exibir_dados()  # Recarregar a visualização
+              
 # Classe da janela do modulo ContasCasa
 class JanelaContasDeCasa(customtkinter.CTkToplevel):
     
